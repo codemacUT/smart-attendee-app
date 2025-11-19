@@ -40,32 +40,40 @@ This project was developed under the Smart India Hackathon 2025 problem statemen
 
 
 ### 🔐 Login  
-<img src="screenshots/login.png" width="350"/>
+<p align="center">
+  <img src="screenshots/login.png" width="350"/>
+</p>
 
 ### 👩‍🏫 Teacher – Select Class & Subject  
+<p align="center">
 <img src="screenshots/teacher_class_select.png" width="350"/>
+</p>
 
 ### 👩‍🏫 Teacher – Generate Lecture QR  
+<p align="center">
 <img src="screenshots/qr_generate.png" width="350"/>
+</p>
 
 ### 👨‍🎓 Student Dashboard  
+<p align="center">
 <img src="screenshots/student_dashboard.png" width="350"/>
+</p>
 
 ### 👨‍🎓 Student – QR Scanner  
+<p align="center">
 <img src="screenshots/scan_qr.png" width="350"/>
+</p>
 
 ---
 
-## 🎥 Demo Video (Coming Soon)
+## 🎥 Demo Video
 
 A full video tutorial showing:
 - Login  
 - Teacher QR generation  
 - Student QR scanning  
 - Attendance verification  
-- Analytics overview  
-
-Place your file here once ready:
+- Analytics overview
 
 ```
 /videos/demo.mp4
