@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                     ),
                     SizedBox(height: Responsive.getSpacing(context) * 3),
                     Text(
-                      'SmartAtendee',
+                      'SmartAttendee',
                       style: Theme.of(context).textTheme.displayMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5,
