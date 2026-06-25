@@ -4,6 +4,8 @@ import 'package:smart_attendee/shared/widgets/custom_card.dart';
 import 'package:smart_attendee/shared/widgets/custom_button.dart';
 import 'package:smart_attendee/shared/widgets/loading_indicator.dart';
 import 'package:smart_attendee/services/student_analytics_service.dart';
+import 'package:smart_attendee/services/auth_service.dart';
+import 'package:smart_attendee/shared/screens/login_screen.dart';
 import 'package:smart_attendee/utils/theme.dart';
 import 'package:smart_attendee/utils/responsive.dart';
 
@@ -19,12 +21,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
   late Animation<Offset> _slideAnimation;
   
   final StudentAnalyticsService _analyticsService = StudentAnalyticsService();
+  final AuthService _authService = AuthService();
   
   // State variables for student data
   Map<String, dynamic>? _studentData;
   Map<String, dynamic>? _studentProfile;
   bool _isLoading = true;
   String? _errorMessage;
+  bool _showAllSubjects = false;
 
   @override
   void initState() {
@@ -66,7 +70,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
           _studentData = analyticsResult['data'];
         });
       } else {
-        print('DEBUG: Analytics fetch failed: ${analyticsResult['message']}');
+        _errorMessage = analyticsResult['message'];
       }
 
       if (profileResult['success']) {
@@ -74,7 +78,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
           _studentProfile = profileResult['data'];
         });
       } else {
-        print('DEBUG: Profile fetch failed: ${profileResult['message']}');
+        // Profile failed non-critically — analytics may still display
       }
 
       // If both fail, show error
@@ -85,9 +89,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
       }
 
     } catch (e) {
-      print('DEBUG: Error fetching student data: $e');
       setState(() {
-        _errorMessage = 'Error loading data: $e';
+        _errorMessage = 'Error loading data. Please try again.';
       });
     } finally {
       setState(() {
@@ -101,9 +104,17 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => QRScannerScreen(
-          onAttendanceMarked: _fetchStudentData, // ✅ pass the function, no ()
+          onAttendanceMarked: _fetchStudentData,
         ),
       ),
+    );
+  }
+
+  Future<void> _logout() async {
+    await _authService.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
     );
   }
 
@@ -146,7 +157,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                                     Container(
                                       padding: EdgeInsets.all(Responsive.getSpacing(context) * 0.75),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
+                                        color: Colors.white.withValues(alpha: 0.2),
                                         borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 0.75),
                                       ),
                                       child: Icon(
@@ -171,11 +182,28 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                                           Text(
                                             '${_getClassName()} • Ready to mark your attendance?',
                                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                              color: Colors.white.withOpacity(0.9),
+                                              color: Colors.white.withValues(alpha: 0.9),
                                               fontSize: Responsive.getFontSize(context, 12),
                                             ),
                                           ),
                                         ],
+                                      ),
+                                    ),
+                                    // Logout button
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(
+                                            Responsive.getSpacing(context) * 0.75),
+                                      ),
+                                      child: IconButton(
+                                        onPressed: _logout,
+                                        icon: Icon(
+                                          Icons.logout_rounded,
+                                          color: Colors.white,
+                                          size: Responsive.getIconSize(context, 20),
+                                        ),
+                                        tooltip: 'Logout',
                                       ),
                                     ),
                                   ],
@@ -239,7 +267,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                         // Risk Warning Banner (if applicable)
                         if (_hasRiskWarning())
                           CustomCard(
-                            backgroundColor: Colors.orange.withOpacity(0.1),
+                            backgroundColor: Colors.orange.withValues(alpha: 0.1),
                             child: Row(
                               children: [
                                 Icon(
@@ -383,7 +411,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
-                                    'Recent Activity',
+                                    'Subject Attendance',
                                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -392,6 +420,31 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                               ),
                               const SizedBox(height: 4),
                               ..._buildSubjectItems(context),
+                              // View all / Show less toggle
+                              if (_getSubjectsCount() > 3)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: TextButton.icon(
+                                    onPressed: () => setState(
+                                        () => _showAllSubjects = !_showAllSubjects),
+                                    icon: Icon(
+                                      _showAllSubjects
+                                          ? Icons.expand_less_rounded
+                                          : Icons.expand_more_rounded,
+                                      size: 18,
+                                      color: AppTheme.primaryBlack,
+                                    ),
+                                    label: Text(
+                                      _showAllSubjects
+                                          ? 'Show less'
+                                          : 'View all ${_getSubjectsCount()} subjects',
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: AppTheme.primaryBlack,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -537,8 +590,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
 
     final subjects = _studentData!['subjects'] as List;
     final List<Widget> items = [];
+    // Show top 3 unless _showAllSubjects is true
+    final limit = _showAllSubjects ? subjects.length : (subjects.length < 3 ? subjects.length : 3);
 
-    for (int i = 0; i < subjects.length && i < 3; i++) {
+    for (int i = 0; i < limit; i++) {
       final subject = subjects[i];
       final subjectName = subject['subjectName'] ?? 
                          subject['subject_name'] ?? 
@@ -565,7 +620,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
         ),
       );
 
-      if (i < subjects.length - 1 && i < 2) {
+      if (i < limit - 1) {
         items.add(const SizedBox(height: 12));
       }
     }
@@ -614,7 +669,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

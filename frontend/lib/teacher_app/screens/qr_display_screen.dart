@@ -20,7 +20,8 @@ class QRDisplayScreen extends StatefulWidget {
   State<QRDisplayScreen> createState() => _QRDisplayScreenState();
 }
 
-class _QRDisplayScreenState extends State<QRDisplayScreen> with TickerProviderStateMixin {
+class _QRDisplayScreenState extends State<QRDisplayScreen>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final AttendanceService _attendanceService = AttendanceService();
   String? _qrData;
   bool _isLoading = true;
@@ -33,6 +34,8 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with TickerProviderSt
   int? _sessionId;
   List<Map<String, dynamic>> _students = [];
   int _timeRemaining = 300; // 5 minutes in seconds
+  static const int _sessionDuration = 300;
+  DateTime? _sessionStartTime;
   Timer? _timer;
   Timer? _pollingTimer;
 
@@ -52,59 +55,62 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with TickerProviderSt
     ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
     
     _generateQr();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
     _timer?.cancel();
     _pollingTimer?.cancel();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _sessionStartTime != null) {
+      // Recalculate remaining time from wall-clock to prevent drift
+      final elapsed = DateTime.now().difference(_sessionStartTime!).inSeconds;
+      final remaining = _sessionDuration - elapsed;
+      if (mounted) {
+        setState(() => _timeRemaining = remaining.clamp(0, _sessionDuration));
+        if (remaining <= 0) _endSession();
+      }
+    }
+  }
+
   Future<void> _generateQr() async {
     setState(() { _isLoading = true; _errorMessage = null; });
     try {
-      print('DEBUG: QR Display - Starting QR generation');
-      print('DEBUG: QR Display - ClassId: ${widget.classId}, SubjectId: ${widget.subjectId}');
-      
       final result = await _attendanceService.generateQrSession(
         classId: widget.classId,
         subjectId: widget.subjectId,
       );
-      
-      print('DEBUG: QR Display - Generation result: $result');
-      
+
       if (result['success']) {
         final data = result['data'];
-        print('DEBUG: QR Display - Success data: $data');
-        
+
         setState(() {
-          // Try different possible keys for qrSessionId
-          _qrData = data['qrSessionId']?.toString() ?? 
-                   data['sessionId']?.toString() ?? 
-                   data['id']?.toString() ?? 
+          _qrData = data['qrSessionId']?.toString() ??
+                   data['sessionId']?.toString() ??
+                   data['id']?.toString() ??
                    'test_qr_${DateTime.now().millisecondsSinceEpoch}';
-          _sessionId = data['sessionId'] ?? 
+          _sessionId = data['sessionId'] ??
                       int.tryParse(data['qrSessionId']?.toString() ?? '') ??
                       int.tryParse(data['id']?.toString() ?? '');
         });
-        
-        print('DEBUG: QR Display - QR Data: $_qrData');
-        print('DEBUG: QR Display - Session ID: $_sessionId');
-        
+
         _startTimers();
         _animationController.forward();
       } else {
-        print('DEBUG: QR Display - Error: ${result['message']}');
         setState(() {
           _errorMessage = 'Failed to generate QR code: ${result['message']}';
         });
       }
     } catch (e) {
-      print('DEBUG: QR Display - Exception: $e');
       setState(() {
-        _errorMessage = 'Error generating QR code: $e';
+        _errorMessage = 'Error generating QR code. Please try again.';
       });
     } finally {
       setState(() => _isLoading = false);
@@ -112,6 +118,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with TickerProviderSt
   }
 
   void _startTimers() {
+    _sessionStartTime = DateTime.now();
     // Countdown timer
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
@@ -148,18 +155,160 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with TickerProviderSt
   }
 
   Future<void> _endSession() async {
+    _timer?.cancel();
+    _pollingTimer?.cancel();
+
     if (_sessionId != null) {
       try {
         await _attendanceService.endSession(_sessionId!);
       } catch (e) {
-        // Handle error silently
+        // Handle silently
       }
     }
-    _timer?.cancel();
-    _pollingTimer?.cancel();
-    if (mounted) {
-      Navigator.pop(context);
-    }
+
+    if (!mounted) return;
+
+    // Count present students from the last polled data
+    final presentCount =
+        _students.where((s) => s['status'] == 'present' || s['attended'] == true).length;
+    final totalCount = _students.length;
+
+    await showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _buildSessionSummary(presentCount, totalCount),
+    );
+
+    if (mounted) Navigator.pop(context);
+  }
+
+  Widget _buildSessionSummary(int presentCount, int totalCount) {
+    final absentCount = totalCount > 0 ? totalCount - presentCount : null;
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 24),
+            decoration: BoxDecoration(
+              color: AppTheme.mediumGray,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // Icon
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_rounded, color: Colors.white, size: 36),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Session Complete',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryBlack,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'QR attendance session has ended',
+            style: TextStyle(fontSize: 14, color: AppTheme.darkGray),
+          ),
+          const SizedBox(height: 24),
+          // Stats row
+          Row(
+            children: [
+              Expanded(
+                child: _summaryStatTile(
+                  icon: Icons.check_circle_rounded,
+                  color: Colors.green,
+                  label: 'Present',
+                  value: '$presentCount',
+                ),
+              ),
+              if (absentCount != null) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _summaryStatTile(
+                    icon: Icons.cancel_rounded,
+                    color: Colors.red,
+                    label: 'Absent',
+                    value: '$absentCount',
+                  ),
+                ),
+              ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: _summaryStatTile(
+                  icon: Icons.group_rounded,
+                  color: AppTheme.primaryBlack,
+                  label: 'Total',
+                  value: totalCount > 0 ? '$totalCount' : '—',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: CustomButton(
+              text: 'Done',
+              icon: Icons.arrow_back_rounded,
+              type: ButtonType.gradient,
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryStatTile({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryBlack,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: AppTheme.darkGray),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -194,7 +343,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with TickerProviderSt
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: IconButton(
@@ -221,7 +370,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with TickerProviderSt
                                 Text(
                                   'Students can scan this QR code',
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                   ),
                                 ),
                               ],
@@ -529,7 +678,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with TickerProviderSt
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isPresent ? Colors.green.withOpacity(0.1) : AppTheme.lightGray,
+        color: isPresent ? Colors.green.withValues(alpha: 0.1) : AppTheme.lightGray,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isPresent ? Colors.green : AppTheme.mediumGray,

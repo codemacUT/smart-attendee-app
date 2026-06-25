@@ -33,7 +33,7 @@ class CustomCard extends StatelessWidget {
       child: Material(
         color: backgroundColor ?? Colors.white,
         elevation: elevation ?? 8,
-        shadowColor: Colors.black.withOpacity(0.1),
+        shadowColor: Colors.black.withValues(alpha: 0.1),
         borderRadius: responsiveBorderRadius,
         child: InkWell(
           onTap: onTap,

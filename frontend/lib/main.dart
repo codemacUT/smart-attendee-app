@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:smart_attendee/shared/screens/login_screen.dart';
+import 'package:smart_attendee/shared/screens/splash_screen.dart';
+import 'package:smart_attendee/utils/app_navigator.dart';
 import 'package:smart_attendee/utils/theme.dart';
 
 void main() {
-  runApp(const SmartAtendeeApp());
+  runApp(const SmartAttendeeApp());
 }
 
-class SmartAtendeeApp extends StatelessWidget {
-  const SmartAtendeeApp({super.key});
+class SmartAttendeeApp extends StatelessWidget {
+  const SmartAttendeeApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SmartAtendee',
+      title: 'SmartAttendee',
       theme: AppTheme.lightTheme,
-      home: const LoginScreen(),
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      navigatorKey: navigatorKey,
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

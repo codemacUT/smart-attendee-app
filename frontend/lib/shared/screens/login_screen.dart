@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   final _passwordController = TextEditingController(text: 'faculty123');
   final AuthService _authService = AuthService();
   bool _isLoading = false;
+  bool _obscurePassword = true;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -93,6 +94,71 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     }
   }
 
+  void _showForgotPasswordDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.lightGray,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.mediumGray),
+                ),
+                child: const Icon(
+                  Icons.lock_reset_rounded,
+                  size: 36,
+                  color: AppTheme.primaryBlack,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Reset Password',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Password resets are managed by your institution administrator.\n\nPlease contact your admin with your registered email to get a new password.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.darkGray,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlack,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(
+                    'Got it',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         gradient: AppTheme.primaryGradient,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.2),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -136,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                     ),
                     SizedBox(height: Responsive.getSpacing(context) * 3),
                     Text(
-                      'SmartAtendee',
+                      'SmartAttendee',
                       style: Theme.of(context).textTheme.displayMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5,
@@ -202,12 +268,23 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                           // Password Field
                           TextFormField(
                             controller: _passwordController,
-                            obscureText: true,
+                            obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: 'Password',
                               prefixIcon: Icon(
                                 Icons.lock_outline,
                                 size: Responsive.getIconSize(context, 20),
+                              ),
+                              suffixIcon: IconButton(
+                                onPressed: () => setState(
+                                    () => _obscurePassword = !_obscurePassword),
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  size: Responsive.getIconSize(context, 20),
+                                  color: AppTheme.darkGray,
+                                ),
                               ),
                               contentPadding: EdgeInsets.symmetric(
                                 horizontal: Responsive.getSpacing(context),
@@ -233,9 +310,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                           // Forgot Password
                           Center(
                             child: TextButton(
-                              onPressed: () {
-                                // TODO: Implement forgot password
-                              },
+                              onPressed: _showForgotPasswordDialog,
                               child: Text(
                                 'Forgot Password?',
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
