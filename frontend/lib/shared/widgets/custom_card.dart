@@ -27,13 +27,14 @@ class CustomCard extends StatelessWidget {
     final responsivePadding = padding ?? Responsive.getCardPadding(context);
     final responsiveMargin = margin ?? Responsive.getMargin(context);
     final responsiveBorderRadius = borderRadius ?? BorderRadius.circular(Responsive.getSpacing(context) * 2);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Container(
       margin: responsiveMargin,
       child: Material(
-        color: backgroundColor ?? Colors.white,
+        color: backgroundColor ?? Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
         elevation: elevation ?? 8,
-        shadowColor: Colors.black.withValues(alpha: 0.1),
+        shadowColor: Colors.black.withValues(alpha: isDarkMode ? 0.4 : 0.1),
         borderRadius: responsiveBorderRadius,
         child: InkWell(
           onTap: onTap,
@@ -42,7 +43,7 @@ class CustomCard extends StatelessWidget {
             padding: responsivePadding,
             decoration: BoxDecoration(
               borderRadius: responsiveBorderRadius,
-              gradient: AppTheme.cardGradient,
+              gradient: isDarkMode ? null : AppTheme.cardGradient,
             ),
             child: child,
           ),

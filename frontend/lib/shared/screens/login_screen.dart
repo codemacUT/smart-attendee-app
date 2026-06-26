@@ -163,23 +163,27 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppTheme.lightGray, Colors.white],
+            colors: [
+              Theme.of(context).scaffoldBackgroundColor,
+              Theme.of(context).colorScheme.surface,
+            ],
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: Responsive.getPadding(context),
-            child: FadeTransition(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: Responsive.getPadding(context),
+              child: FadeTransition(
               opacity: _fadeAnimation,
               child: SlideTransition(
                 position: _slideAnimation,
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(height: Responsive.getSpacing(context) * 5),
                     // Logo and Title Section
                     Container(
                       padding: EdgeInsets.all(Responsive.getSpacing(context) * 2.5),
@@ -202,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                     ),
                     SizedBox(height: Responsive.getSpacing(context) * 3),
                     Text(
-                      'SmartAttendee',
+                      'Smart Attendee',
                       style: Theme.of(context).textTheme.displayMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5,
@@ -218,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(height: Responsive.getSpacing(context) * 6),
+                    SizedBox(height: Responsive.getSpacing(context) * 4),
                     
                     // Login Form Card
                     CustomCard(
@@ -329,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                     
                     // Demo Credentials Card
                     CustomCard(
-                      backgroundColor: AppTheme.lightGray,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
                       child: Column(
                         children: [
                           Row(
@@ -353,9 +357,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                           Container(
                             padding: Responsive.getCardPadding(context),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(Responsive.getSpacing(context)),
-                              border: Border.all(color: AppTheme.mediumGray),
+                              border: Border.all(color: AppTheme.mediumGray.withValues(alpha: 0.3)),
                             ),
                             child: Column(
                               children: [
@@ -405,11 +409,11 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                       ),
                     ),
                     
-                    SizedBox(height: Responsive.getSpacing(context) * 5),
                   ],
                 ),
               ),
             ),
+          ),
           ),
         ),
       ),

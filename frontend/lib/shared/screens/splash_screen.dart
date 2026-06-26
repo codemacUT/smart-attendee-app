@@ -153,20 +153,21 @@ class _SplashScreenState extends State<SplashScreen>
                       child: ScaleTransition(
                         scale: _scaleAnimation,
                         child: Container(
-                          width: 100,
-                          height: 100,
+                          width: 140,
+                          height: 140,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(28),
+                            color: Colors.white,
+                            shape: BoxShape.circle,
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.3),
                               width: 1.5,
                             ),
                           ),
-                          child: const Icon(
-                            Icons.school_rounded,
-                            color: Colors.white,
-                            size: 54,
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                       ),
@@ -180,7 +181,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Column(
                         children: [
                           Text(
-                            'SmartAttendee',
+                            'Smart Attendee',
                             style: Theme.of(context)
                                 .textTheme
                                 .displaySmall
@@ -219,7 +220,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                     ),
-                  ],
+                      ],
                 );
               },
             ),

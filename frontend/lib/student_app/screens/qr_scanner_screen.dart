@@ -241,7 +241,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                 child: Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surface : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -262,7 +262,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                       Text(
                         'Please wait while we mark your attendance',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.darkGray,
+                              color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
                             ),
                         textAlign: TextAlign.center,
                       ),

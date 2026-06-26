@@ -107,15 +107,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppTheme.lightGray, Colors.white],
-          ),
-        ),
-        child: SafeArea(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
           child: _isLoading
               ? const LoadingIndicator(
                   message: 'Loading your dashboard...',
@@ -143,9 +136,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                                     // Class Selection Card
                                     _buildSectionLabel(context, 'Select Class'),
                                     CustomCard(
+                                      margin: EdgeInsets.zero,
+                                      padding: EdgeInsets.symmetric(horizontal: Responsive.getSpacing(context) * 1.5, vertical: 4),
                                       child: DropdownButtonHideUnderline(
                                         child: DropdownButton<dynamic>(
                                           value: _selectedClass,
+                                          borderRadius: BorderRadius.circular(16),
+                                          dropdownColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : Colors.white,
                                           isExpanded: true,
                                           hint: Text(
                                             'Choose a class',
@@ -153,12 +150,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                                                 .textTheme
                                                 .bodyMedium
                                                 ?.copyWith(
-                                                  color: AppTheme.accentGray,
+                                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                                 ),
                                           ),
-                                          icon: const Icon(
+                                          icon: Icon(
                                             Icons.keyboard_arrow_down_rounded,
-                                            color: AppTheme.darkGray,
+                                            color: Theme.of(context).colorScheme.onSurface,
                                           ),
                                           items: _classes
                                               .map<DropdownMenuItem<dynamic>>(
@@ -186,12 +183,16 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                                     // Subject Selection Card
                                     _buildSectionLabel(context, 'Select Subject'),
                                     CustomCard(
+                                      margin: EdgeInsets.zero,
+                                      padding: EdgeInsets.symmetric(horizontal: Responsive.getSpacing(context) * 1.5, vertical: 4),
                                       backgroundColor: _selectedClass == null
-                                          ? AppTheme.lightGray
-                                          : Colors.white,
+                                          ? (Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray)
+                                          : Theme.of(context).cardTheme.color,
                                       child: DropdownButtonHideUnderline(
                                         child: DropdownButton<dynamic>(
                                           value: _selectedSubject,
+                                          borderRadius: BorderRadius.circular(16),
+                                          dropdownColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : Colors.white,
                                           isExpanded: true,
                                           hint: Text(
                                             _selectedClass == null
@@ -201,14 +202,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                                                 .textTheme
                                                 .bodyMedium
                                                 ?.copyWith(
-                                                  color: AppTheme.accentGray,
+                                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                                 ),
                                           ),
                                           icon: Icon(
                                             Icons.keyboard_arrow_down_rounded,
                                             color: _selectedClass == null
-                                                ? AppTheme.mediumGray
-                                                : AppTheme.darkGray,
+                                                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                                                : Theme.of(context).colorScheme.onSurface,
                                           ),
                                           items: _subjects
                                               .map<DropdownMenuItem<dynamic>>(
@@ -239,18 +240,18 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                                     // Info card when nothing selected
                                     if (_selectedClass == null || _selectedSubject == null)
                                       CustomCard(
-                                        backgroundColor: AppTheme.lightGray,
+                                        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
                                         child: Row(
                                           children: [
                                             Container(
-                                              padding: const EdgeInsets.all(10),
+                                              padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.25),
                                               decoration: BoxDecoration(
-                                                color: AppTheme.primaryBlack,
+                                                color: Theme.of(context).colorScheme.primary,
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
-                                              child: const Icon(
+                                              child: Icon(
                                                 Icons.info_outline_rounded,
-                                                color: Colors.white,
+                                                color: Theme.of(context).colorScheme.onPrimary,
                                                 size: 20,
                                               ),
                                             ),
@@ -261,7 +262,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .bodySmall
-                                                    ?.copyWith(color: AppTheme.darkGray),
+                                                    ?.copyWith(color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray),
                                               ),
                                             ),
                                           ],
@@ -300,72 +301,119 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                         ),
                       ),
                     ),
-        ),
-      ),
+          ),
     );
   }
 
-  // ── Gradient Header ──────────────────────────────────────────────────────
+  // ── Dynamic Greeting ──────────────────────────────────────────────────────
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning';
+    } else if (hour < 17) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  }
+
+  // ── Rich Dashboard Header ──────────────────────────────────────────────────
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerTextColor = isDark ? Theme.of(context).colorScheme.onSurface : Colors.white;
+    final subtitleColor = isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.85);
+    final headerIconBgColor = isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.2);
+
     return Container(
-      margin: Responsive.getMargin(context),
-      padding: Responsive.getCardPadding(context),
+      margin: EdgeInsets.fromLTRB(Responsive.getPadding(context).left, Responsive.getSpacing(context) * 2, Responsive.getPadding(context).right, 0),
+      padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.5),
       decoration: BoxDecoration(
-        gradient: AppTheme.primaryGradient,
+        color: isDark ? Theme.of(context).cardTheme.color : null,
+        gradient: isDark ? null : AppTheme.primaryGradient,
         borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 1.5),
+        boxShadow: isDark ? [] : [
+          BoxShadow(
+            color: AppTheme.primaryBlack.withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: EdgeInsets.all(Responsive.getSpacing(context) * 0.75),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 0.75),
-            ),
-            child: Icon(
-              Icons.person_rounded,
-              color: Colors.white,
-              size: Responsive.getIconSize(context, 20),
-            ),
-          ),
-          SizedBox(width: Responsive.getSpacing(context)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hi, ${_facultyName ?? 'Faculty'}! 👋',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: Responsive.getFontSize(context, 18),
-                      ),
+          // Top Row: Avatar & Logout Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.all(Responsive.getSpacing(context) * 0.75),
+                decoration: BoxDecoration(
+                  color: headerIconBgColor,
+                  shape: BoxShape.circle,
                 ),
-                Text(
-                  'Select class & subject to start a session',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: Responsive.getFontSize(context, 12),
-                      ),
+                child: Icon(
+                  Icons.school_rounded,
+                  color: headerTextColor,
+                  size: Responsive.getIconSize(context, 24),
                 ),
-              ],
-            ),
-          ),
-          // Logout button
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 0.75),
-            ),
-            child: IconButton(
-              onPressed: _logout,
-              icon: Icon(
-                Icons.logout_rounded,
-                color: Colors.white,
-                size: Responsive.getIconSize(context, 20),
               ),
-              tooltip: 'Logout',
-            ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _logout,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Logout',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: headerTextColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.logout_rounded,
+                          color: headerTextColor,
+                          size: Responsive.getIconSize(context, 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          SizedBox(height: Responsive.getSpacing(context) * 1.5),
+          
+          // Greeting and Faculty Details
+          Text(
+            '${_getGreeting()} 👋',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: subtitleColor,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _facultyName ?? 'Dr. Rajesh Kumar',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: headerTextColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: Responsive.getFontSize(context, 22),
+                  letterSpacing: -0.5,
+                ),
           ),
         ],
       ),
@@ -376,7 +424,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
   Widget _buildErrorState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(Responsive.getSpacing(context) * 3),
         child: CustomCard(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -400,7 +448,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium
-                    ?.copyWith(color: AppTheme.darkGray),
+                    ?.copyWith(color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -428,7 +476,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
       child: Text(
         label,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: AppTheme.darkGray,
+              color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8) : AppTheme.darkGray,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),

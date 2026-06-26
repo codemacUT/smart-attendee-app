@@ -120,16 +120,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppTheme.lightGray, Colors.white],
-          ),
-        ),
-        child: SafeArea(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
           child: _isLoading
               ? const LoadingIndicator(
                   message: 'Loading your dashboard...',
@@ -145,70 +140,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                           child: Column(
                             children: [
                               // Custom Header
-                              Container(
-                                margin: Responsive.getMargin(context),
-                                padding: Responsive.getCardPadding(context),
-                                decoration: BoxDecoration(
-                                  gradient: AppTheme.primaryGradient,
-                                  borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 1.5),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: EdgeInsets.all(Responsive.getSpacing(context) * 0.75),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 0.75),
-                                      ),
-                                      child: Icon(
-                                        Icons.person_rounded,
-                                        color: Colors.white,
-                                        size: Responsive.getIconSize(context, 20),
-                                      ),
-                                    ),
-                                    SizedBox(width: Responsive.getSpacing(context)),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Hi, ${_getStudentName()}! 👋',
-                                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: Responsive.getFontSize(context, 20),
-                                            ),
-                                          ),
-                                          Text(
-                                            '${_getClassName()} • Ready to mark your attendance?',
-                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                              color: Colors.white.withValues(alpha: 0.9),
-                                              fontSize: Responsive.getFontSize(context, 12),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    // Logout button
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(
-                                            Responsive.getSpacing(context) * 0.75),
-                                      ),
-                                      child: IconButton(
-                                        onPressed: _logout,
-                                        icon: Icon(
-                                          Icons.logout_rounded,
-                                          color: Colors.white,
-                                          size: Responsive.getIconSize(context, 20),
-                                        ),
-                                        tooltip: 'Logout',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              _buildHeader(),
                               
                               // Main Content
                               Padding(
@@ -247,7 +179,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                                 title: 'Attendance %',
                                 value: '${_getAttendancePercentage()}%',
                                 icon: Icons.trending_up_rounded,
-                                iconColor: AppTheme.primaryBlack,
+                                iconColor: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             SizedBox(width: Responsive.getSpacing(context) * 2),
@@ -256,7 +188,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                                 title: 'Subjects',
                                 value: '${_getSubjectsCount()}',
                                 icon: Icons.school_rounded,
-                                iconColor: AppTheme.primaryBlack,
+                                iconColor: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ],
@@ -312,13 +244,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                               Container(
                                 padding: Responsive.getCardPadding(context),
                                 decoration: BoxDecoration(
-                                  gradient: AppTheme.primaryGradient,
+                                  color: isDark ? Theme.of(context).colorScheme.surface : null,
+                                  gradient: isDark ? null : AppTheme.primaryGradient,
                                   borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 1.5),
                                 ),
                                 child: Icon(
                                   Icons.qr_code_scanner_rounded,
                                   size: Responsive.getIconSize(context, 50),
-                                  color: Colors.white,
+                                  color: isDark ? Theme.of(context).colorScheme.onSurface : Colors.white,
                                 ),
                               ),
                               SizedBox(height: Responsive.getSpacing(context) * 1.5),
@@ -355,18 +288,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                         
                         // Info Card
                         CustomCard(
-                          backgroundColor: AppTheme.lightGray,
+                          backgroundColor: isDark ? Theme.of(context).cardTheme.color : AppTheme.lightGray,
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(12),
+                                padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.5),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryBlack,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.location_on_rounded,
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.onPrimary,
                                   size: 24,
                                 ),
                               ),
@@ -385,7 +318,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                                     Text(
                                       'Ensure your location is enabled to mark attendance',
                                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: AppTheme.darkGray,
+                                        color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
                                       ),
                                     ),
                                   ],
@@ -406,7 +339,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                                 children: [
                                   Icon(
                                     Icons.history_rounded,
-                                    color: AppTheme.primaryBlack,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     size: 24,
                                   ),
                                   const SizedBox(width: 12),
@@ -432,14 +365,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                                           ? Icons.expand_less_rounded
                                           : Icons.expand_more_rounded,
                                       size: 18,
-                                      color: AppTheme.primaryBlack,
+                                      color: Theme.of(context).colorScheme.primary,
                                     ),
                                     label: Text(
                                       _showAllSubjects
                                           ? 'Show less'
                                           : 'View all ${_getSubjectsCount()} subjects',
                                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: AppTheme.primaryBlack,
+                                        color: Theme.of(context).colorScheme.primary,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -457,16 +390,15 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                           ),
                         ),
                       ),
-          )
-        ),
-      ),
+                    ),
+          ),
     );
   }
 
   Widget _buildErrorState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(Responsive.getSpacing(context) * 3),
         child: CustomCard(
         child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -488,7 +420,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
               Text(
                 _errorMessage!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.darkGray,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               textAlign: TextAlign.center,
               ),
@@ -508,6 +440,127 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
   }
 
   // Helper methods to extract data from API response
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning';
+    } else if (hour < 17) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  }
+
+  Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerTextColor = isDark ? Theme.of(context).colorScheme.onSurface : Colors.white;
+    final subtitleColor = isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.85);
+    final headerIconBgColor = isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.2);
+
+    return Container(
+      margin: EdgeInsets.fromLTRB(Responsive.getPadding(context).left, Responsive.getSpacing(context) * 2, Responsive.getPadding(context).right, 0),
+      padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.5),
+      decoration: BoxDecoration(
+        color: isDark ? Theme.of(context).cardTheme.color : null,
+        gradient: isDark ? null : AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 1.5),
+        boxShadow: isDark ? [] : [
+          BoxShadow(
+            color: AppTheme.primaryBlack.withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Avatar & Logout Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.all(Responsive.getSpacing(context) * 0.75),
+                decoration: BoxDecoration(
+                  color: headerIconBgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.person_rounded, // Standard icon for student
+                  color: headerTextColor,
+                  size: Responsive.getIconSize(context, 24),
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _logout,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Logout',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: headerTextColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.logout_rounded,
+                          color: headerTextColor,
+                          size: Responsive.getIconSize(context, 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          SizedBox(height: Responsive.getSpacing(context) * 1.5),
+          
+          // Greeting and Student Details
+          Text(
+            '${_getGreeting()} 👋',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: subtitleColor,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _getStudentName(),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: headerTextColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: Responsive.getFontSize(context, 22),
+                  letterSpacing: -0.5,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _getClassName(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: subtitleColor,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _getStudentName() {
     if (_studentProfile != null) {
       return _studentProfile!['name'] ?? 
@@ -583,7 +636,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
           'N/A',
           'N/A',
           Icons.info_rounded,
-          AppTheme.mediumGray,
+          Theme.of(context).colorScheme.primary,
         ),
       ];
     }
@@ -636,12 +689,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
     IconData icon,
     Color color,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(Responsive.getSpacing(context) * 2),
       decoration: BoxDecoration(
-        color: AppTheme.lightGray,
+        color: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.mediumGray),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -660,7 +715,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                 Text(
                   time,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.darkGray,
+                    color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
                   ),
                 ),
               ],
