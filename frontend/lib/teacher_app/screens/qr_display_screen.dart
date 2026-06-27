@@ -244,7 +244,8 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
 
     if (!mounted) return;
 
-    // Count present students from the last polled data
+    // Note: Session complete card is commented out until backend provides stat endpoints
+    /*
     final presentCount =
         _students.where((s) => s['status'] == 'present' || s['attended'] == true).length;
     final totalCount = _students.length;
@@ -256,10 +257,12 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
       backgroundColor: Colors.transparent,
       builder: (_) => _buildSessionSummary(presentCount, totalCount),
     );
+    */
 
     if (mounted) Navigator.pop(context);
   }
 
+  /*
   Widget _buildSessionSummary(int presentCount, int totalCount) {
     final absentCount = totalCount > 0 ? totalCount - presentCount : null;
     return Container(
@@ -386,6 +389,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
       ),
     );
   }
+  */
 
   @override
   Widget build(BuildContext context) {
