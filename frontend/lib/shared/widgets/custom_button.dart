@@ -28,55 +28,71 @@ class CustomButton extends StatelessWidget {
     final fontSize = Responsive.getFontSize(context, 16);
     final spacing = Responsive.getSpacing(context);
     
-    Widget buttonChild = Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (isLoading)
-          SizedBox(
-            width: iconSize,
-            height: iconSize,
-            child: const CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          )
-        else ...[
-          if (icon != null) ...[
-            Icon(icon, size: iconSize, color: Colors.white),
-            SizedBox(width: spacing),
-          ],
-          Text(
-            text,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: fontSize,
-            ),
-          ),
-        ],
-      ],
-    );
 
     switch (type) {
       case ButtonType.primary:
-        return SizedBox(
-          width: width,
-          height: height ?? Responsive.getButtonHeight(context),
-          child: ElevatedButton(
-            onPressed: isLoading ? null : onPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryBlack,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shadowColor: Colors.black.withValues(alpha: 0.3),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(Responsive.getSpacing(context)),
+      case ButtonType.gradient:
+        final isDisabled = onPressed == null && !isLoading;
+        return Opacity(
+          opacity: isDisabled ? 0.5 : 1.0,
+          child: Container(
+            width: width,
+            height: height ?? Responsive.getButtonHeight(context),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppTheme.primaryBlack, AppTheme.secondaryBlack],
+              ),
+              borderRadius: BorderRadius.circular(Responsive.getSpacing(context)),
+              boxShadow: isDisabled ? [] : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: isLoading ? null : onPressed,
+              borderRadius: BorderRadius.circular(Responsive.getSpacing(context)),
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (isLoading)
+                      SizedBox(
+                        width: iconSize,
+                        height: iconSize,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    else ...[
+                      if (icon != null) ...[
+                        Icon(icon, size: iconSize, color: Colors.white),
+                        SizedBox(width: spacing),
+                      ],
+                      Text(
+                        text,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: fontSize,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-            child: buttonChild,
           ),
-        );
+        ),
+      );
       case ButtonType.secondary:
         final color = Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface : AppTheme.primaryBlack;
         return SizedBox(
@@ -165,68 +181,6 @@ class CustomButton extends StatelessWidget {
             ),
           ),
         );
-      case ButtonType.gradient:
-        final isDisabled = onPressed == null && !isLoading;
-        return Opacity(
-          opacity: isDisabled ? 0.5 : 1.0,
-          child: Container(
-            width: width,
-            height: height ?? Responsive.getButtonHeight(context),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppTheme.primaryBlack, AppTheme.secondaryBlack],
-              ),
-              borderRadius: BorderRadius.circular(Responsive.getSpacing(context)),
-              boxShadow: isDisabled ? [] : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: isLoading ? null : onPressed,
-              borderRadius: BorderRadius.circular(Responsive.getSpacing(context)),
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (isLoading)
-                      SizedBox(
-                        width: iconSize,
-                        height: iconSize,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    else ...[
-                      if (icon != null) ...[
-                        Icon(icon, size: iconSize, color: Colors.white),
-                        SizedBox(width: spacing),
-                      ],
-                      Text(
-                        text,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: fontSize,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
     }
   }
 }
