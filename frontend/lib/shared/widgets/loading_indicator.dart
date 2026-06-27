@@ -15,6 +15,8 @@ class LoadingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -25,7 +27,7 @@ class LoadingIndicator extends StatelessWidget {
             child: CircularProgressIndicator(
               strokeWidth: 3,
               valueColor: AlwaysStoppedAnimation<Color>(
-                color ?? AppTheme.primaryBlack,
+                color ?? (isDark ? Colors.white : AppTheme.primaryBlack),
               ),
             ),
           ),
@@ -34,7 +36,7 @@ class LoadingIndicator extends StatelessWidget {
             Text(
               message!,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.darkGray,
+                color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
               ),
               textAlign: TextAlign.center,
             ),

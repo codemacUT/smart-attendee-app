@@ -78,14 +78,15 @@ class CustomButton extends StatelessWidget {
           ),
         );
       case ButtonType.secondary:
+        final color = Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface : AppTheme.primaryBlack;
         return SizedBox(
           width: width,
           height: height ?? Responsive.getButtonHeight(context),
           child: OutlinedButton(
             onPressed: isLoading ? null : onPressed,
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.primaryBlack,
-              side: const BorderSide(color: AppTheme.primaryBlack, width: 2),
+              foregroundColor: color,
+              side: BorderSide(color: color, width: 2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(Responsive.getSpacing(context)),
               ),
@@ -98,20 +99,20 @@ class CustomButton extends StatelessWidget {
                   SizedBox(
                     width: iconSize,
                     height: iconSize,
-                    child: const CircularProgressIndicator(
+                    child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlack),
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
                     ),
                   )
                 else ...[
                   if (icon != null) ...[
-                    Icon(icon, size: iconSize, color: AppTheme.primaryBlack),
+                    Icon(icon, size: iconSize, color: color),
                     SizedBox(width: spacing),
                   ],
                   Text(
                     text,
                     style: TextStyle(
-                      color: AppTheme.primaryBlack,
+                      color: color,
                       fontWeight: FontWeight.w600,
                       fontSize: fontSize,
                     ),
@@ -165,25 +166,28 @@ class CustomButton extends StatelessWidget {
           ),
         );
       case ButtonType.gradient:
-        return Container(
-          width: width,
-          height: height ?? Responsive.getButtonHeight(context),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppTheme.primaryBlack, AppTheme.secondaryBlack],
-            ),
-            borderRadius: BorderRadius.circular(Responsive.getSpacing(context)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+        final isDisabled = onPressed == null && !isLoading;
+        return Opacity(
+          opacity: isDisabled ? 0.5 : 1.0,
+          child: Container(
+            width: width,
+            height: height ?? Responsive.getButtonHeight(context),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppTheme.primaryBlack, AppTheme.secondaryBlack],
               ),
-            ],
-          ),
-          child: Material(
+              borderRadius: BorderRadius.circular(Responsive.getSpacing(context)),
+              boxShadow: isDisabled ? [] : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: isLoading ? null : onPressed,
@@ -221,7 +225,8 @@ class CustomButton extends StatelessWidget {
               ),
             ),
           ),
-        );
+        ),
+      );
     }
   }
 }

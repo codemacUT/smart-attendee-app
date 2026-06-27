@@ -6,6 +6,7 @@ import 'package:smart_attendee/shared/widgets/custom_card.dart';
 import 'package:smart_attendee/shared/widgets/custom_button.dart';
 import 'package:smart_attendee/shared/widgets/loading_indicator.dart';
 import 'package:smart_attendee/utils/theme.dart';
+import 'package:smart_attendee/utils/responsive.dart';
 
 class QRDisplayScreen extends StatefulWidget {
   final int classId;
@@ -102,6 +103,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
         });
 
         _startTimers();
+        _animationController.reset();
         _animationController.forward();
       } else {
         setState(() {
@@ -118,7 +120,12 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
   }
 
   void _startTimers() {
+    _timer?.cancel();
+    _pollingTimer?.cancel();
+    
+    _timeRemaining = _sessionDuration;
     _sessionStartTime = DateTime.now();
+    
     // Countdown timer
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
@@ -151,6 +158,75 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
       }
     } catch (e) {
       // Silently handle polling errors
+    }
+  }
+
+  Future<void> _confirmEndSession() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    final bool? shouldEnd = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDark ? Theme.of(context).cardTheme.color : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 2),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(Responsive.getSpacing(context) * 2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange,
+                  size: 60,
+                ),
+                SizedBox(height: Responsive.getSpacing(context) * 1.5),
+                Text(
+                  'End Session?',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: Responsive.getSpacing(context)),
+                Text(
+                  'Are you sure you want to close this session? The QR code will immediately expire.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: Responsive.getSpacing(context) * 2),
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomButton(
+                        text: 'Cancel',
+                        type: ButtonType.secondary,
+                        onPressed: () => Navigator.of(context).pop(false),
+                      ),
+                    ),
+                    SizedBox(width: Responsive.getSpacing(context)),
+                    Expanded(
+                      child: CustomButton(
+                        text: 'End Session',
+                        type: ButtonType.gradient,
+                        onPressed: () => Navigator.of(context).pop(true),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (shouldEnd == true) {
+      _endSession();
     }
   }
 
@@ -313,84 +389,87 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppTheme.lightGray, Colors.white],
-          ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Custom Header
-                    Container(
-                      margin: const EdgeInsets.all(4),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: AppTheme.primaryGradient,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(
-                                Icons.arrow_back_rounded,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'QR Code Display',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Text(
-                                  'Students can scan this QR code',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Custom Header
+            Container(
+              margin: EdgeInsets.fromLTRB(Responsive.getPadding(context).left, Responsive.getSpacing(context) * 2, Responsive.getPadding(context).right, 0),
+              padding: EdgeInsets.symmetric(
+                vertical: Responsive.getSpacing(context) * 2,
+                horizontal: Responsive.getSpacing(context) * 2,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? Theme.of(context).cardTheme.color : null,
+                gradient: isDark ? null : AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 1.5),
+                boxShadow: isDark ? [] : [
+                  BoxShadow(
+                    color: AppTheme.primaryBlack.withValues(alpha: 0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    
-                    // Main Content
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 4, 4, 2),
-                      child: Column(
-                        children: [
-                          if (_isLoading)
-                            const LoadingIndicator(
-                              message: 'Generating QR Code...',
-                              size: 50,
-                            )
-                          else if (_errorMessage != null)
+                    child: const Icon(
+                      Icons.qr_code_scanner_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  SizedBox(width: Responsive.getSpacing(context) * 1.5),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'QR Code Active',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Students can scan this to mark attendance',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Main Content
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                      child: LoadingIndicator(
+                        message: 'Generating QR Code...',
+                        size: 50,
+                      ),
+                    )
+                  : _errorMessage != null
+                      ? SingleChildScrollView(
+                          padding: Responsive.getPadding(context),
+                          child: 
                             CustomCard(
                               child: Column(
                                 children: [
@@ -439,9 +518,16 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                                   ),
                                 ],
                               ),
-                            )
-                          else if (_qrData != null)
-                            Column(
+                            ),
+                        )
+                      : _qrData != null
+                          ? FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: SlideTransition(
+                                position: _slideAnimation,
+                                child: SingleChildScrollView(
+                                  padding: Responsive.getPadding(context),
+                                  child: Column(
                               children: [
                                 // QR Code Card
                                 CustomCard(
@@ -455,26 +541,11 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                                           border: Border.all(color: AppTheme.mediumGray),
                                         ),
                                         child: QrImageView(
-              data: _qrData!,
-              version: QrVersions.auto,
-                                          size: 200.0,
+                                          data: _qrData!,
+                                          version: QrVersions.auto,
+                                          size: 260.0,
                                           backgroundColor: Colors.white,
                                         ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'QR Code Active',
-                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Students can scan this code to mark attendance',
-                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: AppTheme.darkGray,
-                                        ),
-                                        textAlign: TextAlign.center,
                                       ),
                                     ],
                                   ),
@@ -484,7 +555,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                                 
                                 // Status Card with Countdown
                                 CustomCard(
-                                  backgroundColor: AppTheme.lightGray,
+                                  backgroundColor: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
                                   child: Row(
                                     children: [
                                       Container(
@@ -544,7 +615,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                                         text: 'Close Session',
                                         icon: Icons.stop_rounded,
                                         onPressed: () {
-                                          _endSession();
+                                          _confirmEndSession();
                                         },
                                         type: ButtonType.secondary,
                                       ),
@@ -586,7 +657,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                                 
                                 // Instructions Card
                                 CustomCard(
-                                  backgroundColor: AppTheme.lightGray,
+                                  backgroundColor: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -594,7 +665,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                                         children: [
                                           Icon(
                                             Icons.info_outline_rounded,
-                                            color: AppTheme.primaryBlack,
+                                            color: isDark ? Theme.of(context).colorScheme.onSurface : AppTheme.primaryBlack,
                                             size: 24,
                                           ),
                                           const SizedBox(width: 12),
@@ -619,17 +690,15 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                                 ),
                               ],
                             ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
             ),
-          ),
+          ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildInstructionItem(
@@ -643,14 +712,14 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: AppTheme.primaryBlack,
+            color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface : AppTheme.primaryBlack,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
             child: Text(
               number,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surface : Colors.white,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -661,7 +730,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
           child: Text(
             text,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.darkGray,
+              color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8) : AppTheme.darkGray,
             ),
           ),
         ),
@@ -678,10 +747,10 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isPresent ? Colors.green.withValues(alpha: 0.1) : AppTheme.lightGray,
+        color: isPresent ? Colors.green.withValues(alpha: 0.1) : (Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isPresent ? Colors.green : AppTheme.mediumGray,
+          color: isPresent ? Colors.green : (Theme.of(context).brightness == Brightness.dark ? Theme.of(context).dividerColor : AppTheme.mediumGray),
           width: 1,
         ),
       ),
@@ -707,7 +776,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                   Text(
                     'Roll: $rollNumber',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.darkGray,
+                      color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
                     ),
                   ),
               ],
