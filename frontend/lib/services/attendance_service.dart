@@ -47,6 +47,19 @@ class AttendanceService {
     }
   }
 
+  Future<Map<String, dynamic>> getSessionStats(int sessionId) async {
+    try {
+      final response = await _api.get('/attendance/session/$sessionId/stats');
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {'success': false, 'message': 'Failed to fetch session stats'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   Future<Map<String, dynamic>> endSession(int sessionId) async {
     try {
       final response = await _api.post(

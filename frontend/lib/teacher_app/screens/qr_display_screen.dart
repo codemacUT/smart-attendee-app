@@ -234,9 +234,22 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
     _timer?.cancel();
     _pollingTimer?.cancel();
 
+    int presentCount = 0;
+    int totalCount = 0;
+    List<dynamic> presentStudents = [];
+    List<dynamic> absentStudents = [];
+
     if (_sessionId != null) {
       try {
         await _attendanceService.endSession(_sessionId!);
+        final statsRes = await _attendanceService.getSessionStats(_sessionId!);
+        if (statsRes['success'] == true) {
+          final data = statsRes['data'];
+          presentCount = data['presentCount'] ?? 0;
+          totalCount = data['totalCount'] ?? 0;
+          presentStudents = data['presentStudents'] ?? [];
+          absentStudents = data['absentStudents'] ?? [];
+        }
       } catch (e) {
         // Handle silently
       }
@@ -244,35 +257,28 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
 
     if (!mounted) return;
 
-    // Note: Session complete card is commented out until backend provides stat endpoints
-    /*
-    final presentCount =
-        _students.where((s) => s['status'] == 'present' || s['attended'] == true).length;
-    final totalCount = _students.length;
-
     await showModalBottomSheet(
       context: context,
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (_) => _buildSessionSummary(presentCount, totalCount),
+      isScrollControlled: true,
+      builder: (_) => _buildSessionSummary(presentCount, totalCount, presentStudents, absentStudents),
     );
-    */
 
     if (mounted) Navigator.pop(context);
   }
 
-  /*
-  Widget _buildSessionSummary(int presentCount, int totalCount) {
-    final absentCount = totalCount > 0 ? totalCount - presentCount : null;
+  Widget _buildSessionSummary(int presentCount, int totalCount, List<dynamic> presentStudents, List<dynamic> absentStudents) {
+    final absentCount = totalCount > 0 ? totalCount - presentCount : 0;
     return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           // Handle bar
           Container(
@@ -319,17 +325,15 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                   value: '$presentCount',
                 ),
               ),
-              if (absentCount != null) ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _summaryStatTile(
-                    icon: Icons.cancel_rounded,
-                    color: Colors.red,
-                    label: 'Absent',
-                    value: '$absentCount',
-                  ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _summaryStatTile(
+                  icon: Icons.cancel_rounded,
+                  color: Colors.red,
+                  label: 'Absent',
+                  value: '$absentCount',
                 ),
-              ],
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: _summaryStatTile(
@@ -342,6 +346,32 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
             ],
           ),
           const SizedBox(height: 24),
+          Expanded(
+            child: ListView(
+              children: [
+                if (presentStudents.isNotEmpty) ...[
+                  const Text("Present Students", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  ...presentStudents.map((s) => ListTile(
+                    leading: const Icon(Icons.person, color: Colors.green),
+                    title: Text(s['name'] ?? 'Unknown'),
+                    subtitle: Text(s['enrollmentNo'] ?? ''),
+                  )).toList(),
+                  const Divider(),
+                ],
+                if (absentStudents.isNotEmpty) ...[
+                  const Text("Absent Students", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  ...absentStudents.map((s) => ListTile(
+                    leading: const Icon(Icons.person_outline, color: Colors.red),
+                    title: Text(s['name'] ?? 'Unknown'),
+                    subtitle: Text(s['enrollmentNo'] ?? ''),
+                  )).toList(),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: CustomButton(
@@ -389,7 +419,6 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
       ),
     );
   }
-  */
 
   @override
   Widget build(BuildContext context) {

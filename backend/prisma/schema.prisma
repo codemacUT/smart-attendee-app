@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @relation(fields: [roleId], references: [id])
+  roleId    Int
+  createdAt DateTime @default(now())
+
+  studentProfile Student?
+  facultyProfile Faculty?
+  parentProfile  Parent?
+}
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String @unique // admin, faculty, student, parent
+  users User[]
+}
+
+model Student {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int      @unique
+  name          String
+  enrollmentNo  String?  @unique
+  class         Class?   @relation(fields: [classId], references: [id])
+  classId       Int?
+
+  parents           Parent[]
+  attendanceRecords AttendanceRecord[]
+}
+
+model Faculty {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int      @unique
+  name       String
+  department String?
+  
+  classes    Class[]
+  qrSessions QRSession[]
+}
+
+model Parent {
+  id       Int       @id @default(autoincrement())
+  user     User      @relation(fields: [userId], references: [id])
+  userId   Int       @unique
+  name     String
+  phone    String?
+
+  students Student[]
+}
+
+model Class {
+  id        Int      @id @default(autoincrement())
+  name      String
+  faculty   Faculty? @relation(fields: [facultyId], references: [id])
+  facultyId Int?
+
+  students   Student[]
+  subjects   ClassSubject[]
+  qrSessions QRSession[]
+  attendanceRecords AttendanceRecord[]
+}
+
+model Subject {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  classes           ClassSubject[]
+  qrSessions        QRSession[]
+  attendanceRecords AttendanceRecord[]
+}
+
+model ClassSubject {
+  class     Class   @relation(fields: [classId], references: [id])
+  classId   Int
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId Int
+
+  @@id([classId, subjectId])
+}
+
+model QRSession {
+  id          Int      @id @default(autoincrement())
+  faculty     Faculty  @relation(fields: [facultyId], references: [id])
+  facultyId   Int
+  class       Class    @relation(fields: [classId], references: [id])
+  classId     Int
+  subject     Subject? @relation(fields: [subjectId], references: [id])
+  subjectId   Int?
+  generatedAt DateTime @default(now())
+  geoLat      Float
+  geoLng      Float
+  isActive    Boolean  @default(true)
+
+  attendanceRecords AttendanceRecord[]
+}
+
+model AttendanceRecord {
+  id          Int       @id @default(autoincrement())
+  student     Student   @relation(fields: [studentId], references: [id])
+  studentId   Int
+  class       Class     @relation(fields: [classId], references: [id])
+  classId     Int
+  subject     Subject   @relation(fields: [subjectId], references: [id])
+  subjectId   Int
+  qrSession   QRSession @relation(fields: [qrSessionId], references: [id])
+  qrSessionId Int
+  status      String    @default("present")
+  datetime    DateTime  @default(now())
+
+  @@unique([studentId, qrSessionId])
+}
