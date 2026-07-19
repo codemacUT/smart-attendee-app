@@ -6,6 +6,7 @@ import 'package:smart_attendee/shared/screens/login_screen.dart';
 import 'package:smart_attendee/shared/widgets/custom_button.dart';
 import 'package:smart_attendee/shared/widgets/custom_card.dart';
 import 'package:smart_attendee/shared/widgets/loading_indicator.dart';
+import 'package:smart_attendee/shared/widgets/shimmer_loading.dart';
 import 'package:smart_attendee/shared/widgets/logout_dialog.dart';
 import 'package:smart_attendee/shared/widgets/session_summary_modal.dart';
 import 'package:smart_attendee/teacher_app/screens/qr_display_screen.dart';
@@ -70,6 +71,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
       _errorMessage = null;
     });
     try {
+      // Ensure the slide animation finishes so the shimmer is visible
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+
       final profileFuture = _facultyService.getFacultyProfile();
       final analyticsFuture = _facultyService.getFacultyAnalytics();
       final results = await Future.wait([profileFuture, analyticsFuture]);
@@ -121,17 +126,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
           child: _isLoading
-              ? const LoadingIndicator(
-                  message: 'Loading your dashboard...',
-                  size: 50,
-                )
+              ? const DashboardSkeletonLoader()
               : _errorMessage != null
                   ? _buildErrorState()
-                  : FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: Column(
+                  : Column(
                           children: [
                             // ── Gradient Header ──────────────────────────
                             _buildHeader(),
@@ -288,8 +286,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                             ),
                           ],
                         ),
-                      ),
-                    ),
           ),
     );
   }
@@ -309,100 +305,80 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
   // ── Rich Dashboard Header ──────────────────────────────────────────────────
   Widget _buildHeader() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final headerTextColor = isDark ? Theme.of(context).colorScheme.onSurface : Colors.white;
-    final subtitleColor = isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.85);
-    final headerIconBgColor = isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.2);
 
-    return Container(
-      margin: EdgeInsets.fromLTRB(Responsive.getPadding(context).left, Responsive.getSpacing(context) * 2, Responsive.getPadding(context).right, 0),
-      padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.5),
-      decoration: BoxDecoration(
-        color: isDark ? Theme.of(context).cardTheme.color : null,
-        gradient: isDark ? null : AppTheme.primaryGradient,
-        borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 1.5),
-        boxShadow: isDark ? [] : [
-          BoxShadow(
-            color: AppTheme.primaryBlack.withValues(alpha: 0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        Responsive.getPadding(context).left, 
+        Responsive.getSpacing(context) * 2.5, 
+        Responsive.getPadding(context).right, 
+        Responsive.getSpacing(context) * 1.5,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Top Row: Avatar & Logout Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: EdgeInsets.all(Responsive.getSpacing(context) * 0.75),
+          // Left: Premium Avatar
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.school_rounded,
+              color: Theme.of(context).colorScheme.primary,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Middle: Greeting and Faculty Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_getGreeting()} 👋',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.2,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _facultyName ?? 'Dr. Rajesh Kumar',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: isDark ? Colors.white : AppTheme.primaryBlack,
+                        fontWeight: FontWeight.w800,
+                        fontSize: Responsive.getFontSize(context, 22),
+                        letterSpacing: -0.5,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          // Right: Elegant Logout Button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _logout,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: headerIconBgColor,
-                  shape: BoxShape.circle,
+                  color: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
                 ),
                 child: Icon(
-                  Icons.school_rounded,
-                  color: headerTextColor,
-                  size: Responsive.getIconSize(context, 24),
+                  Icons.logout_rounded,
+                  color: isDark ? Theme.of(context).colorScheme.onSurface : AppTheme.primaryBlack,
+                  size: 22,
                 ),
               ),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _logout,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Logout',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: headerTextColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.logout_rounded,
-                          color: headerTextColor,
-                          size: Responsive.getIconSize(context, 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          SizedBox(height: Responsive.getSpacing(context) * 1.5),
-          
-          // Greeting and Faculty Details
-          Text(
-            '${_getGreeting()} 👋',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: subtitleColor,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _facultyName ?? 'Dr. Rajesh Kumar',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: headerTextColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: Responsive.getFontSize(context, 22),
-                  letterSpacing: -0.5,
-                ),
+            ),
           ),
         ],
       ),
@@ -482,50 +458,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
       return;
     }
     
-    // Show loading overlay
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) => const Center(child: CircularProgressIndicator()),
+    showSessionSummaryFutureModal(
+      context,
+      fetchFuture: _attendanceService.getSessionStats(sessionId),
+      title: '${session['className']} - ${session['subjectName']}',
     );
-    
-    try {
-      final statsRes = await _attendanceService.getSessionStats(sessionId);
-      if (mounted) Navigator.pop(context); // Close loading overlay
-      
-      if (statsRes['success'] == true) {
-        final data = statsRes['data'];
-        final presentCount = data['presentCount'] ?? 0;
-        final totalCount = data['totalCount'] ?? 0;
-        final presentStudents = data['presentStudents'] ?? [];
-        final absentStudents = data['absentStudents'] ?? [];
-        
-        if (mounted) {
-          await showSessionSummaryModal(
-            context,
-            presentCount: presentCount,
-            totalCount: totalCount,
-            presentStudents: presentStudents,
-            absentStudents: absentStudents,
-            title: '${session['className']} - ${session['subjectName']}',
-            subtitle: 'Session Details',
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load session details: ${statsRes['message']}')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context); // Close loading overlay
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error loading session details')),
-        );
-      }
-    }
   }
 
   // ── Session Card ────────────────────────────────────────────────────────

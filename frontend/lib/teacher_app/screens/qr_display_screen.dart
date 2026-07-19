@@ -267,6 +267,10 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
       presentStudents: presentStudents,
       absentStudents: absentStudents,
     );
+    
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override

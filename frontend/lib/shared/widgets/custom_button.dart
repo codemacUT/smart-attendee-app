@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:smart_attendee/utils/theme.dart';
 import 'package:smart_attendee/utils/responsive.dart';
 
@@ -64,12 +65,26 @@ class CustomButton extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (isLoading)
-                      SizedBox(
-                        width: iconSize,
-                        height: iconSize,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      Shimmer.fromColors(
+                        baseColor: Colors.white.withValues(alpha: 0.5),
+                        highlightColor: Colors.white,
+                        period: const Duration(milliseconds: 1200),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (icon != null) ...[
+                              Icon(icon, size: iconSize, color: Colors.white),
+                              SizedBox(width: spacing),
+                            ],
+                            Text(
+                              text,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: fontSize,
+                              ),
+                            ),
+                          ],
                         ),
                       )
                     else ...[
@@ -112,12 +127,26 @@ class CustomButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (isLoading)
-                  SizedBox(
-                    width: iconSize,
-                    height: iconSize,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                  Shimmer.fromColors(
+                    baseColor: color.withValues(alpha: 0.5),
+                    highlightColor: color,
+                    period: const Duration(milliseconds: 1200),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (icon != null) ...[
+                          Icon(icon, size: iconSize, color: color),
+                          SizedBox(width: spacing),
+                        ],
+                        Text(
+                          text,
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                            fontSize: fontSize,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 else ...[
@@ -155,12 +184,26 @@ class CustomButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (isLoading)
-                  SizedBox(
-                    width: iconSize,
-                    height: iconSize,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlack),
+                  Shimmer.fromColors(
+                    baseColor: AppTheme.primaryBlack.withValues(alpha: 0.5),
+                    highlightColor: AppTheme.primaryBlack,
+                    period: const Duration(milliseconds: 1200),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (icon != null) ...[
+                          Icon(icon, size: iconSize, color: AppTheme.primaryBlack),
+                          SizedBox(width: spacing),
+                        ],
+                        Text(
+                          text,
+                          style: TextStyle(
+                            color: AppTheme.primaryBlack,
+                            fontWeight: FontWeight.w600,
+                            fontSize: fontSize,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 else ...[

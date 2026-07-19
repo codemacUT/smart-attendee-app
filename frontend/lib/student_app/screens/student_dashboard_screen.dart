@@ -3,6 +3,7 @@ import 'package:smart_attendee/student_app/screens/qr_scanner_screen.dart';
 import 'package:smart_attendee/shared/widgets/custom_card.dart';
 import 'package:smart_attendee/shared/widgets/custom_button.dart';
 import 'package:smart_attendee/shared/widgets/loading_indicator.dart';
+import 'package:smart_attendee/shared/widgets/shimmer_loading.dart';
 import 'package:smart_attendee/services/student_analytics_service.dart';
 import 'package:smart_attendee/services/auth_service.dart';
 import 'package:smart_attendee/shared/screens/login_screen.dart';
@@ -30,8 +31,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
   bool _isLoading = true;
   String? _errorMessage;
   bool _showAllSubjects = false;
-  int _selectedTab = 0;
-
   @override
   void initState() {
     super.initState();
@@ -58,6 +57,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
 
   Future<void> _fetchStudentData() async {
     try {
+      // Ensure the slide animation finishes so the shimmer is visible
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+
       setState(() {
         _isLoading = true;
         _errorMessage = null;
@@ -132,17 +135,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
           child: _isLoading
-              ? const LoadingIndicator(
-                  message: 'Loading your dashboard...',
-                  size: 50,
-                )
+              ? const DashboardSkeletonLoader()
               : _errorMessage != null
                   ? _buildErrorState()
-                  : FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: SingleChildScrollView(
+                  : SingleChildScrollView(
                           child: Column(
                             children: [
                               // Custom Header
@@ -184,7 +180,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
                                       color: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
-                                ],
+                                  ],
                               ),
                             ],
                           ),
@@ -235,61 +231,46 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
                         
                         // Main Action Card
                         CustomCard(
+                          padding: const EdgeInsets.all(20),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Container(
-                                padding: Responsive.getCardPadding(context),
-                                decoration: BoxDecoration(
-                                  color: isDark ? Theme.of(context).colorScheme.surface : null,
-                                  gradient: isDark ? null : AppTheme.primaryGradient,
-                                  borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 1.5),
-                                ),
-                                child: Icon(
-                                  Icons.qr_code_scanner_rounded,
-                                  size: Responsive.getIconSize(context, 50),
-                                  color: isDark ? Theme.of(context).colorScheme.onSurface : Colors.white,
-                                ),
-                              ),
-                              SizedBox(height: Responsive.getSpacing(context) * 1.5),
-                              Text(
-                                'Mark Your Attendance',
-                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: Responsive.getFontSize(context, 20),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: Responsive.getSpacing(context) / 2),
-                              Text(
-                                'Scan the QR code displayed by your teacher to mark your attendance',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: AppTheme.darkGray,
-                                  fontSize: Responsive.getFontSize(context, 14),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: Responsive.getSpacing(context) * 2),
-                              CustomButton(
-                                text: 'Scan QR Code',
-                                icon: Icons.qr_code_scanner_rounded,
-                                onPressed: _onScanPressed,
-                                type: ButtonType.gradient,
-                                width: double.infinity,
-                              ),
-                              SizedBox(height: Responsive.getSpacing(context) * 1.5),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.location_on_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Location Required for Attendance',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
-                                      fontWeight: FontWeight.w600,
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(Icons.qr_code_scanner_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Ready for Class?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.location_on_rounded, size: 14, color: AppTheme.darkGray),
+                                            const SizedBox(width: 4),
+                                            Text('Location required', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.darkGray)),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
+                              ),
+                              const SizedBox(height: 16),
+                              CustomButton(
+                                text: 'Scan QR Code',
+                                icon: Icons.camera_alt_rounded,
+                                onPressed: _onScanPressed,
+                                type: ButtonType.gradient,
+                                width: double.infinity,
                               ),
                             ],
                           ),
@@ -302,99 +283,15 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Custom Tab Bar
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () => setState(() => _selectedTab = 0),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 10),
-                                          decoration: BoxDecoration(
-                                            color: _selectedTab == 0 ? (isDark ? Theme.of(context).colorScheme.surface : Colors.white) : Colors.transparent,
-                                            borderRadius: BorderRadius.circular(8),
-                                            boxShadow: _selectedTab == 0 ? [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(alpha: 0.05),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
-                                              )
-                                            ] : null,
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            'History',
-                                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                              fontWeight: _selectedTab == 0 ? FontWeight.bold : FontWeight.normal,
-                                              color: _selectedTab == 0 ? Theme.of(context).colorScheme.onSurface : (isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () => setState(() => _selectedTab = 1),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 10),
-                                          decoration: BoxDecoration(
-                                            color: _selectedTab == 1 ? (isDark ? Theme.of(context).colorScheme.surface : Colors.white) : Colors.transparent,
-                                            borderRadius: BorderRadius.circular(8),
-                                            boxShadow: _selectedTab == 1 ? [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(alpha: 0.05),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
-                                              )
-                                            ] : null,
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            'Overview',
-                                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                              fontWeight: _selectedTab == 1 ? FontWeight.bold : FontWeight.normal,
-                                              color: _selectedTab == 1 ? Theme.of(context).colorScheme.onSurface : (isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              // Section Heading
+                              _buildSectionLabel(context, 'My Subjects'),
                               const SizedBox(height: 16),
-                              if (_selectedTab == 1) ...[
-                                ..._buildSubjectItems(context),
-                                if (_getSubjectsCount() > 3)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Center(
-                                      child: TextButton.icon(
-                                        onPressed: () => setState(() => _showAllSubjects = !_showAllSubjects),
-                                        icon: Icon(
-                                          _showAllSubjects ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-                                          size: 18,
-                                          color: Theme.of(context).colorScheme.primary,
-                                        ),
-                                        label: Text(
-                                          _showAllSubjects ? 'Show less' : 'View all ${_getSubjectsCount()} subjects',
-                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: Theme.of(context).colorScheme.primary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ] else ...[
-                                ..._buildRecentSessions(context),
-                              ],
+                              ..._buildRecentSessions(context),
+                              
+                              // Decorative Footer
+                              const SizedBox(height: 32),
+                              _buildDecorativeFooter(context),
+                              const SizedBox(height: 16),
                             ],
                           ),
                         ),
@@ -406,9 +303,31 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
                             ],
                           ),
                         ),
-                      ),
-                    ),
           ),
+    );
+  }
+
+  Widget _buildDecorativeFooter(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.check_circle_outline_rounded,
+            size: 48,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "You're all caught up for today!",
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5) : AppTheme.darkGray.withValues(alpha: 0.5),
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -456,6 +375,23 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
     );
   }
 
+  Widget _buildSectionLabel(BuildContext context, String label) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: Responsive.getSpacing(context) * 0.5,
+        bottom: Responsive.getSpacing(context) * 0.75,
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8) : AppTheme.darkGray,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+      ),
+    );
+  }
+
   // Helper methods to extract data from API response
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -470,108 +406,90 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
 
   Widget _buildHeader() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final headerTextColor = isDark ? Theme.of(context).colorScheme.onSurface : Colors.white;
-    final subtitleColor = isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.85);
-    final headerIconBgColor = isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.2);
 
-    return Container(
-      margin: EdgeInsets.fromLTRB(Responsive.getPadding(context).left, Responsive.getSpacing(context) * 2, Responsive.getPadding(context).right, 0),
-      padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.5),
-      decoration: BoxDecoration(
-        color: isDark ? Theme.of(context).cardTheme.color : null,
-        gradient: isDark ? null : AppTheme.primaryGradient,
-        borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 1.5),
-        boxShadow: isDark ? [] : [
-          BoxShadow(
-            color: AppTheme.primaryBlack.withValues(alpha: 0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        Responsive.getPadding(context).left, 
+        Responsive.getSpacing(context) * 2.5, 
+        Responsive.getPadding(context).right, 
+        Responsive.getSpacing(context) * 1.5,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Top Row: Avatar & Logout Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: EdgeInsets.all(Responsive.getSpacing(context) * 0.75),
+          // Left: Premium Avatar
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.person_rounded,
+              color: Theme.of(context).colorScheme.primary,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Middle: Greeting and Name
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_getGreeting()} 👋',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.2,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _getStudentName(),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: isDark ? Colors.white : AppTheme.primaryBlack,
+                        fontWeight: FontWeight.w800,
+                        fontSize: Responsive.getFontSize(context, 22),
+                        letterSpacing: -0.5,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (_getClassName() != 'Class') ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    _getClassName(),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          // Right: Elegant Logout Button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _logout,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: headerIconBgColor,
-                  shape: BoxShape.circle,
+                  color: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
                 ),
                 child: Icon(
-                  Icons.person_rounded, // Standard icon for student
-                  color: headerTextColor,
-                  size: Responsive.getIconSize(context, 24),
+                  Icons.logout_rounded,
+                  color: isDark ? Theme.of(context).colorScheme.onSurface : AppTheme.primaryBlack,
+                  size: 22,
                 ),
               ),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _logout,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Logout',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: headerTextColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.logout_rounded,
-                          color: headerTextColor,
-                          size: Responsive.getIconSize(context, 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          SizedBox(height: Responsive.getSpacing(context) * 1.5),
-          
-          // Greeting and Student Details
-          Text(
-            '${_getGreeting()} 👋',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: subtitleColor,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _getStudentName(),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: headerTextColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: Responsive.getFontSize(context, 22),
-                  letterSpacing: -0.5,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _getClassName(),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: subtitleColor,
-                  fontWeight: FontWeight.w500,
-                ),
+            ),
           ),
         ],
       ),
@@ -630,6 +548,17 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
     return 0.0;
   }
 
+
+  int _getTotalSessions() {
+    if (_studentData != null) {
+      final overall = _studentData!['overall'];
+      if (overall != null) {
+        return (overall['totalSessions'] ?? 0) as int;
+      }
+    }
+    return 0;
+  }
+
   int _getSubjectsCount() {
     if (_studentData != null && _studentData!['subjects'] != null) {
       return (_studentData!['subjects'] as List).length;
@@ -642,60 +571,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
       return _studentData!['prediction']['risk'] == true;
     }
     return false;
-  }
-
-  List<Widget> _buildSubjectItems(BuildContext context) {
-    if (_studentData == null || _studentData!['subjects'] == null) {
-      return [
-        _buildActivityItem(
-          context,
-          'No subjects available',
-          'N/A',
-          'N/A',
-          Icons.info_rounded,
-          Theme.of(context).colorScheme.primary,
-        ),
-      ];
-    }
-
-    final subjects = _studentData!['subjects'] as List;
-    final List<Widget> items = [];
-    // Show top 3 unless _showAllSubjects is true
-    final limit = _showAllSubjects ? subjects.length : (subjects.length < 3 ? subjects.length : 3);
-
-    for (int i = 0; i < limit; i++) {
-      final subject = subjects[i];
-      final subjectName = subject['subjectName'] ?? 
-                         subject['subject_name'] ?? 
-                         subject['name'] ?? 
-                         'Subject ${i + 1}';
-      final attendancePct = subject['attendancePct'] ?? 
-                            subject['attendance_pct'] ?? 
-                            subject['percentage'] ?? 
-                            0.0;
-      
-      final isGoodAttendance = attendancePct >= 75.0;
-      final status = isGoodAttendance ? 'Good' : 'Low';
-      final icon = isGoodAttendance ? Icons.check_circle_rounded : Icons.warning_rounded;
-      final color = isGoodAttendance ? Colors.green : Colors.orange;
-
-      items.add(
-        _buildActivityItem(
-          context,
-          subjectName,
-          status,
-          '${attendancePct.toStringAsFixed(1)}%',
-          icon,
-          color,
-        ),
-      );
-
-      if (i < limit - 1) {
-        items.add(const SizedBox(height: 12));
-      }
-    }
-
-    return items;
   }
 
   Widget _buildActivityItem(
@@ -820,7 +695,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
                 
                 final isPresent = status.toLowerCase() == 'present';
                 final displayStatus = isPresent ? 'Present' : 'Absent';
-                final icon = isPresent ? Icons.check_circle_rounded : Icons.cancel_rounded;
                 final color = isPresent ? Colors.green : Colors.red;
 
                 return Container(
@@ -829,12 +703,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
                   decoration: BoxDecoration(
                     color: isDark ? Theme.of(context).colorScheme.surface : Colors.white,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                    border: Border.all(color: color.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
-                      Icon(icon, color: color, size: 20),
-                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           formattedDate,
