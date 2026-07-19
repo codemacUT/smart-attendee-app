@@ -54,7 +54,7 @@ Future<bool?> showLogoutDialog(BuildContext context) async {
                   SizedBox(width: Responsive.getSpacing(context)),
                   Expanded(
                     child: CustomButton(
-                      text: 'Log Out',
+                      text: 'Yes',
                       type: ButtonType.gradient,
                       onPressed: () => Navigator.of(context).pop(true),
                     ),

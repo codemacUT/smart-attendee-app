@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_attendee/services/attendance_service.dart';
 import 'package:smart_attendee/services/auth_service.dart';
 import 'package:smart_attendee/services/faculty_service.dart';
 import 'package:smart_attendee/shared/screens/login_screen.dart';
@@ -6,6 +7,7 @@ import 'package:smart_attendee/shared/widgets/custom_button.dart';
 import 'package:smart_attendee/shared/widgets/custom_card.dart';
 import 'package:smart_attendee/shared/widgets/loading_indicator.dart';
 import 'package:smart_attendee/shared/widgets/logout_dialog.dart';
+import 'package:smart_attendee/shared/widgets/session_summary_modal.dart';
 import 'package:smart_attendee/teacher_app/screens/qr_display_screen.dart';
 import 'package:smart_attendee/utils/responsive.dart';
 import 'package:smart_attendee/utils/theme.dart';
@@ -21,6 +23,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
     with TickerProviderStateMixin {
   final FacultyService _facultyService = FacultyService();
   final AuthService _authService = AuthService();
+  final AttendanceService _attendanceService = AttendanceService();
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -141,163 +144,107 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                                   children: [
                                     SizedBox(height: Responsive.getSpacing(context)),
 
-                                    // Class Selection Card
-                                    _buildSectionLabel(context, 'Select Class'),
+                                    // Create Session Card
+                                    _buildSectionLabel(context, 'Create New Session'),
                                     CustomCard(
                                       margin: EdgeInsets.zero,
-                                      padding: EdgeInsets.symmetric(horizontal: Responsive.getSpacing(context) * 1.5, vertical: 4),
-                                      child: DropdownButtonHideUnderline(
-                                        child: DropdownButton<dynamic>(
-                                          value: _selectedClass,
-                                          borderRadius: BorderRadius.circular(16),
-                                          dropdownColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : Colors.white,
-                                          isExpanded: true,
-                                          hint: Text(
-                                            'Choose a class',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(
-                                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                      padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.5),
+                                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).cardTheme.color : Colors.white,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          // Class Dropdown
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                                            ),
+                                            child: DropdownButtonHideUnderline(
+                                              child: DropdownButton<dynamic>(
+                                                value: _selectedClass,
+                                                borderRadius: BorderRadius.circular(16),
+                                                dropdownColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : Colors.white,
+                                                isExpanded: true,
+                                                hint: Text(
+                                                  'Choose a class',
+                                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                                  ),
                                                 ),
-                                          ),
-                                          icon: Icon(
-                                            Icons.keyboard_arrow_down_rounded,
-                                            color: Theme.of(context).colorScheme.onSurface,
-                                          ),
-                                          items: _classes
-                                              .map<DropdownMenuItem<dynamic>>(
-                                                (cls) => DropdownMenuItem<dynamic>(
+                                                icon: Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).colorScheme.onSurface),
+                                                items: _classes.map<DropdownMenuItem<dynamic>>((cls) => DropdownMenuItem<dynamic>(
                                                   value: cls,
                                                   child: Text(
                                                     cls['className'] ?? 'Unnamed Class',
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyMedium
-                                                        ?.copyWith(
-                                                          fontWeight: FontWeight.w500,
-                                                        ),
+                                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                                                  ),
+                                                )).toList(),
+                                                onChanged: _onClassSelected,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(height: Responsive.getSpacing(context)),
+                                          // Subject Dropdown
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: _selectedClass == null
+                                                  ? (Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5) : AppTheme.lightGray.withValues(alpha: 0.5))
+                                                  : (Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray),
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                                            ),
+                                            child: DropdownButtonHideUnderline(
+                                              child: DropdownButton<dynamic>(
+                                                value: _selectedSubject,
+                                                borderRadius: BorderRadius.circular(16),
+                                                dropdownColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : Colors.white,
+                                                isExpanded: true,
+                                                hint: Text(
+                                                  _selectedClass == null ? 'Select a class first' : 'Choose a subject',
+                                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                                   ),
                                                 ),
-                                              )
-                                              .toList(),
-                                          onChanged: _onClassSelected,
-                                        ),
-                                      ),
-                                    ),
-
-                                    SizedBox(height: Responsive.getSpacing(context) * 1.5),
-
-                                    // Subject Selection Card
-                                    _buildSectionLabel(context, 'Select Subject'),
-                                    CustomCard(
-                                      margin: EdgeInsets.zero,
-                                      padding: EdgeInsets.symmetric(horizontal: Responsive.getSpacing(context) * 1.5, vertical: 4),
-                                      backgroundColor: _selectedClass == null
-                                          ? (Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray)
-                                          : Theme.of(context).cardTheme.color,
-                                      child: DropdownButtonHideUnderline(
-                                        child: DropdownButton<dynamic>(
-                                          value: _selectedSubject,
-                                          borderRadius: BorderRadius.circular(16),
-                                          dropdownColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : Colors.white,
-                                          isExpanded: true,
-                                          hint: Text(
-                                            _selectedClass == null
-                                                ? 'Select a class first'
-                                                : 'Choose a subject',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(
-                                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                                icon: Icon(
+                                                  Icons.keyboard_arrow_down_rounded,
+                                                  color: _selectedClass == null ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3) : Theme.of(context).colorScheme.onSurface,
                                                 ),
-                                          ),
-                                          icon: Icon(
-                                            Icons.keyboard_arrow_down_rounded,
-                                            color: _selectedClass == null
-                                                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
-                                                : Theme.of(context).colorScheme.onSurface,
-                                          ),
-                                          items: _subjects
-                                              .map<DropdownMenuItem<dynamic>>(
-                                                (sub) => DropdownMenuItem<dynamic>(
+                                                items: _subjects.map<DropdownMenuItem<dynamic>>((sub) => DropdownMenuItem<dynamic>(
                                                   value: sub,
                                                   child: Text(
                                                     sub['subjectName'] ?? 'Unnamed Subject',
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyMedium
-                                                        ?.copyWith(
-                                                          fontWeight: FontWeight.w500,
+                                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                                                  ),
+                                                )).toList(),
+                                                onChanged: _selectedClass == null ? null : (value) => setState(() => _selectedSubject = value),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(height: Responsive.getSpacing(context) * 2),
+                                          // Generate Button
+                                          CustomButton(
+                                            text: 'Generate QR Code',
+                                            icon: Icons.qr_code_2_rounded,
+                                            type: ButtonType.gradient,
+                                            width: double.infinity,
+                                            onPressed: (_selectedClass != null && _selectedSubject != null)
+                                                ? () {
+                                                    Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                        builder: (_) => QRDisplayScreen(
+                                                          classId: _selectedClass!['classId'],
+                                                          subjectId: _selectedSubject!['subjectId'],
                                                         ),
-                                                  ),
-                                                ),
-                                              )
-                                              .toList(),
-                                          onChanged: _selectedClass == null
-                                              ? null
-                                              : (value) =>
-                                                  setState(() => _selectedSubject = value),
-                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                : null,
+                                          ),
+                                        ],
                                       ),
-                                    ),
-
-                                    SizedBox(height: Responsive.getSpacing(context) * 4),
-
-                                    // Info card when nothing selected
-                                    if (_selectedClass == null || _selectedSubject == null)
-                                      CustomCard(
-                                        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.25),
-                                              decoration: BoxDecoration(
-                                                color: Theme.of(context).colorScheme.primary,
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              child: Icon(
-                                                Icons.info_outline_rounded,
-                                                color: Theme.of(context).colorScheme.onPrimary,
-                                                size: 20,
-                                              ),
-                                            ),
-                                            SizedBox(width: Responsive.getSpacing(context) * 1.5),
-                                            Expanded(
-                                              child: Text(
-                                                'Select a class and subject above to generate an attendance QR code.',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall
-                                                    ?.copyWith(color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-
-                                    SizedBox(height: Responsive.getSpacing(context) * 2),
-
-                                    // Generate QR Button
-                                    CustomButton(
-                                      text: 'Generate QR Code',
-                                      icon: Icons.qr_code_2_rounded,
-                                      type: ButtonType.gradient,
-                                      width: double.infinity,
-                                      onPressed: (_selectedClass != null &&
-                                              _selectedSubject != null)
-                                          ? () {
-                                              Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                  builder: (_) => QRDisplayScreen(
-                                                    classId: _selectedClass!['classId'],
-                                                    subjectId: _selectedSubject!['subjectId'],
-                                                  ),
-                                                ),
-                                              );
-                                            }
-                                          : null,
                                     ),
 
                                     SizedBox(height: Responsive.getSpacing(context) * 3),
@@ -526,22 +473,79 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
     );
   }
 
+  Future<void> _showSessionDetails(dynamic session) async {
+    final sessionId = session['sessionId'] ?? session['id'];
+    if (sessionId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: Session ID is missing')),
+      );
+      return;
+    }
+    
+    // Show loading overlay
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => const Center(child: CircularProgressIndicator()),
+    );
+    
+    try {
+      final statsRes = await _attendanceService.getSessionStats(sessionId);
+      if (mounted) Navigator.pop(context); // Close loading overlay
+      
+      if (statsRes['success'] == true) {
+        final data = statsRes['data'];
+        final presentCount = data['presentCount'] ?? 0;
+        final totalCount = data['totalCount'] ?? 0;
+        final presentStudents = data['presentStudents'] ?? [];
+        final absentStudents = data['absentStudents'] ?? [];
+        
+        if (mounted) {
+          await showSessionSummaryModal(
+            context,
+            presentCount: presentCount,
+            totalCount: totalCount,
+            presentStudents: presentStudents,
+            absentStudents: absentStudents,
+            title: '${session['className']} - ${session['subjectName']}',
+            subtitle: 'Session Details',
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to load session details: ${statsRes['message']}')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading overlay
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error loading session details')),
+        );
+      }
+    }
+  }
+
   // ── Session Card ────────────────────────────────────────────────────────
   Widget _buildSessionCard(dynamic session) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final date = DateTime.parse(session['date']).toLocal();
-    final formattedDate = '${date.day}/${date.month}/${date.year}';
+    final formattedDate = '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     final presentCount = session['presentCount'] ?? 0;
     final totalStudents = session['totalStudents'] ?? 0;
     
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
-      child: CustomCard(
-        margin: EdgeInsets.zero,
-        padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.5),
-        backgroundColor: isDark ? Theme.of(context).cardTheme.color : Colors.white,
-        child: Row(
-          children: [
+      child: GestureDetector(
+        onTap: () => _showSessionDetails(session),
+        child: CustomCard(
+          margin: EdgeInsets.zero,
+          padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.5),
+          backgroundColor: isDark ? Theme.of(context).cardTheme.color : Colors.white,
+          child: Row(
+            children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -600,6 +604,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

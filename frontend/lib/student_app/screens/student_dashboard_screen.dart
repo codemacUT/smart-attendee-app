@@ -165,7 +165,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
                                   color: Theme.of(context).colorScheme.primary,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 32),
+                                child: Icon(Icons.analytics_rounded, color: isDark ? Theme.of(context).colorScheme.onPrimary : Colors.white, size: 32),
                               ),
                               SizedBox(width: Responsive.getSpacing(context) * 2),
                               Column(
@@ -329,7 +329,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
                                           ),
                                           alignment: Alignment.center,
                                           child: Text(
-                                            'Overview',
+                                            'History',
                                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                               fontWeight: _selectedTab == 0 ? FontWeight.bold : FontWeight.normal,
                                               color: _selectedTab == 0 ? Theme.of(context).colorScheme.onSurface : (isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray),
@@ -356,7 +356,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
                                           ),
                                           alignment: Alignment.center,
                                           child: Text(
-                                            'History',
+                                            'Overview',
                                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                               fontWeight: _selectedTab == 1 ? FontWeight.bold : FontWeight.normal,
                                               color: _selectedTab == 1 ? Theme.of(context).colorScheme.onSurface : (isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray),
@@ -369,7 +369,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              if (_selectedTab == 0) ...[
+                              if (_selectedTab == 1) ...[
                                 ..._buildSubjectItems(context),
                                 if (_getSubjectsCount() > 3)
                                   Padding(
@@ -772,35 +772,100 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
     }
 
     final sessions = _studentData!['recentSessions'] as List;
-    final List<Widget> items = [];
-    final limit = sessions.length > 5 ? 5 : sessions.length; // Show up to 5 recent sessions
-
-    for (int i = 0; i < limit; i++) {
-      final session = sessions[i];
+    final Map<String, List<dynamic>> groupedSessions = {};
+    for (var session in sessions) {
       final subjectName = session['subjectName'] ?? 'Unknown Subject';
-      final status = session['status'] ?? 'absent';
-      final date = DateTime.parse(session['date']).toLocal();
-      final formattedDate = '${date.day}/${date.month}/${date.year}';
-      
-      final isPresent = status.toLowerCase() == 'present';
-      final displayStatus = isPresent ? 'Present' : 'Absent';
-      final icon = isPresent ? Icons.check_circle_rounded : Icons.cancel_rounded;
-      final color = isPresent ? Colors.green : Colors.red;
+      if (!groupedSessions.containsKey(subjectName)) {
+        groupedSessions[subjectName] = [];
+      }
+      groupedSessions[subjectName]!.add(session);
+    }
+
+    final List<Widget> items = [];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    for (var entry in groupedSessions.entries) {
+      final subjectName = entry.key;
+      final subjectSessions = entry.value;
 
       items.add(
-        _buildActivityItem(
-          context,
-          subjectName,
-          displayStatus,
-          formattedDate,
-          icon,
-          color,
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Theme.of(context).dividerColor),
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              title: Text(
+                subjectName,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              subtitle: Text(
+                '${subjectSessions.length} Session${subjectSessions.length > 1 ? 's' : ''}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
+                ),
+              ),
+              leading: Icon(Icons.class_rounded, color: Theme.of(context).colorScheme.primary),
+              childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              children: subjectSessions.map((session) {
+                final status = session['status'] ?? 'absent';
+                final date = DateTime.parse(session['date']).toLocal();
+                final formattedDate = '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+                
+                final isPresent = status.toLowerCase() == 'present';
+                final displayStatus = isPresent ? 'Present' : 'Absent';
+                final icon = isPresent ? Icons.check_circle_rounded : Icons.cancel_rounded;
+                final color = isPresent ? Colors.green : Colors.red;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? Theme.of(context).colorScheme.surface : Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, color: color, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          formattedDate,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8) : AppTheme.darkGray,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          displayStatus,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
         ),
       );
-
-      if (i < limit - 1) {
-        items.add(const SizedBox(height: 12));
-      }
     }
 
     return items;
