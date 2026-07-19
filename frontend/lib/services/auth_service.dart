@@ -30,12 +30,11 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
+        final role = data['role']; // Use the role sent by the backend directly
+        
         await _saveToken(token);
 
-        final payload = jsonDecode(
-            utf8.decode(base64Url.decode(base64Url.normalize(token.split('.')[1]))));
-
-        return {'success': true, 'role': payload['role']};
+        return {'success': true, 'role': role};
       } else {
         final error = jsonDecode(response.body);
         return {
