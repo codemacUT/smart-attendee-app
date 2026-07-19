@@ -5,6 +5,7 @@ import 'package:smart_attendee/shared/screens/login_screen.dart';
 import 'package:smart_attendee/shared/widgets/custom_button.dart';
 import 'package:smart_attendee/shared/widgets/custom_card.dart';
 import 'package:smart_attendee/shared/widgets/loading_indicator.dart';
+import 'package:smart_attendee/shared/widgets/logout_dialog.dart';
 import 'package:smart_attendee/teacher_app/screens/qr_display_screen.dart';
 import 'package:smart_attendee/utils/responsive.dart';
 import 'package:smart_attendee/utils/theme.dart';
@@ -28,6 +29,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
   String? _facultyName;
   List<dynamic> _classes = [];
   List<dynamic> _subjects = [];
+  List<dynamic> _recentSessions = [];
 
   dynamic _selectedClass;
   dynamic _selectedSubject;
@@ -72,10 +74,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
       final profile = results[0];
       final analyticsData = results[1];
       final assignedClasses = analyticsData['classes'] as List<dynamic>? ?? [];
+      final recentSessions = analyticsData['recentSessions'] as List<dynamic>? ?? [];
 
       setState(() {
         _facultyName = profile['name'];
         _classes = assignedClasses;
+        _recentSessions = recentSessions;
         _isLoading = false;
       });
       _animationController.forward();
@@ -97,6 +101,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
   }
 
   Future<void> _logout() async {
+    final bool? shouldLogout = await showLogoutDialog(context);
+
+    if (shouldLogout != true) return;
+
     await _authService.logout();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -293,6 +301,40 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
                                     ),
 
                                     SizedBox(height: Responsive.getSpacing(context) * 3),
+
+                                    // Recent Sessions Section
+                                    _buildSectionLabel(context, 'Recent Sessions'),
+                                    if (_recentSessions.isNotEmpty) ...[
+                                      ..._recentSessions.map((session) => _buildSessionCard(session)),
+                                    ] else ...[
+                                      CustomCard(
+                                        padding: EdgeInsets.all(Responsive.getSpacing(context) * 2),
+                                        backgroundColor: Theme.of(context).brightness == Brightness.dark 
+                                            ? Theme.of(context).colorScheme.surfaceContainerHighest 
+                                            : AppTheme.lightGray,
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.info_outline_rounded,
+                                              color: Theme.of(context).colorScheme.primary,
+                                              size: 24,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                'No recent sessions found',
+                                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                  color: Theme.of(context).brightness == Brightness.dark 
+                                                      ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) 
+                                                      : AppTheme.darkGray,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                    SizedBox(height: Responsive.getSpacing(context) * 2),
                                   ],
                                 ),
                               ),
@@ -480,6 +522,83 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),
+      ),
+    );
+  }
+
+  // ── Session Card ────────────────────────────────────────────────────────
+  Widget _buildSessionCard(dynamic session) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final date = DateTime.parse(session['date']).toLocal();
+    final formattedDate = '${date.day}/${date.month}/${date.year}';
+    final presentCount = session['presentCount'] ?? 0;
+    final totalStudents = session['totalStudents'] ?? 0;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: CustomCard(
+        margin: EdgeInsets.zero,
+        padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.5),
+        backgroundColor: isDark ? Theme.of(context).cardTheme.color : Colors.white,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.qr_code_2_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${session['className']} - ${session['subjectName']}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    formattedDate,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.people_alt_rounded, size: 14, color: isDark ? Colors.white70 : AppTheme.darkGray),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$presentCount/$totalStudents',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : AppTheme.primaryBlack,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -8,14 +8,15 @@ import 'package:smart_attendee/services/auth_service.dart';
 import 'package:smart_attendee/shared/screens/login_screen.dart';
 import 'package:smart_attendee/utils/theme.dart';
 import 'package:smart_attendee/utils/responsive.dart';
+import 'package:smart_attendee/shared/widgets/logout_dialog.dart';
 
-class StudentHomeScreen extends StatefulWidget {
-  const StudentHomeScreen({super.key});
+class StudentDashboardScreen extends StatefulWidget {
+  const StudentDashboardScreen({super.key});
   @override
-  State<StudentHomeScreen> createState() => _StudentHomeScreenState();
+  State<StudentDashboardScreen> createState() => _StudentDashboardScreenState();
 }
 
-class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProviderStateMixin {
+class _StudentDashboardScreenState extends State<StudentDashboardScreen> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -29,6 +30,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
   bool _isLoading = true;
   String? _errorMessage;
   bool _showAllSubjects = false;
+  int _selectedTab = 0;
 
   @override
   void initState() {
@@ -111,6 +113,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
   }
 
   Future<void> _logout() async {
+    final bool? shouldLogout = await showLogoutDialog(context);
+
+    if (shouldLogout != true) return;
+
     await _authService.logout();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -147,51 +153,41 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                                 padding: Responsive.getPadding(context),
                                 child: Column(
                                   children: [
-                        // Quick Stats Cards
-                        Row(
-                          children: [
-                            Expanded(
-                              child: StatCard(
-                                title: 'Total Present',
-                                value: '${_getTotalPresent()}',
-                                icon: Icons.check_circle_rounded,
-                                iconColor: Colors.green,
+                        // Hero Stat Card
+                        CustomCard(
+                          padding: EdgeInsets.all(Responsive.getSpacing(context) * 2),
+                          backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 32),
                               ),
-                            ),
-                            SizedBox(width: Responsive.getSpacing(context) * 2),
-                            Expanded(
-                              child: StatCard(
-                                title: 'Total Absent',
-                                value: '${_getTotalAbsent()}',
-                                icon: Icons.cancel_rounded,
-                                iconColor: Colors.red,
+                              SizedBox(width: Responsive.getSpacing(context) * 2),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Overall Attendance',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: isDark ? Theme.of(context).colorScheme.onSurface : AppTheme.darkGray,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_getAttendancePercentage()}%',
+                                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                        
-                        SizedBox(height: Responsive.getSpacing(context)),
-                        
-                        Row(
-                          children: [
-                            Expanded(
-                              child: StatCard(
-                                title: 'Attendance %',
-                                value: '${_getAttendancePercentage()}%',
-                                icon: Icons.trending_up_rounded,
-                                iconColor: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            SizedBox(width: Responsive.getSpacing(context) * 2),
-                            Expanded(
-                              child: StatCard(
-                                title: 'Subjects',
-                                value: '${_getSubjectsCount()}',
-                                icon: Icons.school_rounded,
-                                iconColor: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         
                         SizedBox(height: Responsive.getSpacing(context) * 2),
@@ -280,104 +276,125 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
                                 type: ButtonType.gradient,
                                 width: double.infinity,
                               ),
-                            ],
-                          ),
-                        ),
-                        
-                        SizedBox(height: Responsive.getSpacing(context) * 1.5),
-                        
-                        // Info Card
-                        CustomCard(
-                          backgroundColor: isDark ? Theme.of(context).cardTheme.color : AppTheme.lightGray,
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(Responsive.getSpacing(context) * 1.5),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.location_on_rounded,
-                                  color: Theme.of(context).colorScheme.onPrimary,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Location Required',
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Ensure your location is enabled to mark attendance',
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        
-                        SizedBox(height: Responsive.getSpacing(context) * 1.5),
-                        
-                        // Recent Activity Card
-                        CustomCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                              SizedBox(height: Responsive.getSpacing(context) * 1.5),
                               Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    Icons.history_rounded,
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(width: 12),
+                                  Icon(Icons.location_on_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    'Subject Attendance',
-                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    'Location Required for Attendance',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
-                              ..._buildSubjectItems(context),
-                              // View all / Show less toggle
-                              if (_getSubjectsCount() > 3)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: TextButton.icon(
-                                    onPressed: () => setState(
-                                        () => _showAllSubjects = !_showAllSubjects),
-                                    icon: Icon(
-                                      _showAllSubjects
-                                          ? Icons.expand_less_rounded
-                                          : Icons.expand_more_rounded,
-                                      size: 18,
-                                      color: Theme.of(context).colorScheme.primary,
+                            ],
+                          ),
+                        ),
+                        
+                        SizedBox(height: Responsive.getSpacing(context) * 1.5),
+                        
+                        // Details Card (Subjects / History)
+                        CustomCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Custom Tab Bar
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.lightGray,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => setState(() => _selectedTab = 0),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 10),
+                                          decoration: BoxDecoration(
+                                            color: _selectedTab == 0 ? (isDark ? Theme.of(context).colorScheme.surface : Colors.white) : Colors.transparent,
+                                            borderRadius: BorderRadius.circular(8),
+                                            boxShadow: _selectedTab == 0 ? [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(alpha: 0.05),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              )
+                                            ] : null,
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            'Overview',
+                                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                              fontWeight: _selectedTab == 0 ? FontWeight.bold : FontWeight.normal,
+                                              color: _selectedTab == 0 ? Theme.of(context).colorScheme.onSurface : (isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                    label: Text(
-                                      _showAllSubjects
-                                          ? 'Show less'
-                                          : 'View all ${_getSubjectsCount()} subjects',
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => setState(() => _selectedTab = 1),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 10),
+                                          decoration: BoxDecoration(
+                                            color: _selectedTab == 1 ? (isDark ? Theme.of(context).colorScheme.surface : Colors.white) : Colors.transparent,
+                                            borderRadius: BorderRadius.circular(8),
+                                            boxShadow: _selectedTab == 1 ? [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(alpha: 0.05),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              )
+                                            ] : null,
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            'History',
+                                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                              fontWeight: _selectedTab == 1 ? FontWeight.bold : FontWeight.normal,
+                                              color: _selectedTab == 1 ? Theme.of(context).colorScheme.onSurface : (isDark ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7) : AppTheme.darkGray),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              if (_selectedTab == 0) ...[
+                                ..._buildSubjectItems(context),
+                                if (_getSubjectsCount() > 3)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Center(
+                                      child: TextButton.icon(
+                                        onPressed: () => setState(() => _showAllSubjects = !_showAllSubjects),
+                                        icon: Icon(
+                                          _showAllSubjects ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                                          size: 18,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ),
+                                        label: Text(
+                                          _showAllSubjects ? 'Show less' : 'View all ${_getSubjectsCount()} subjects',
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: Theme.of(context).colorScheme.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
+                              ] else ...[
+                                ..._buildRecentSessions(context),
+                              ],
                             ],
                           ),
                         ),
@@ -738,5 +755,54 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> with TickerProvid
         ],
       ),
     );
+  }
+
+  List<Widget> _buildRecentSessions(BuildContext context) {
+    if (_studentData == null || _studentData!['recentSessions'] == null || (_studentData!['recentSessions'] as List).isEmpty) {
+      return [
+        _buildActivityItem(
+          context,
+          'No recent sessions',
+          'N/A',
+          'N/A',
+          Icons.info_rounded,
+          Theme.of(context).colorScheme.primary,
+        ),
+      ];
+    }
+
+    final sessions = _studentData!['recentSessions'] as List;
+    final List<Widget> items = [];
+    final limit = sessions.length > 5 ? 5 : sessions.length; // Show up to 5 recent sessions
+
+    for (int i = 0; i < limit; i++) {
+      final session = sessions[i];
+      final subjectName = session['subjectName'] ?? 'Unknown Subject';
+      final status = session['status'] ?? 'absent';
+      final date = DateTime.parse(session['date']).toLocal();
+      final formattedDate = '${date.day}/${date.month}/${date.year}';
+      
+      final isPresent = status.toLowerCase() == 'present';
+      final displayStatus = isPresent ? 'Present' : 'Absent';
+      final icon = isPresent ? Icons.check_circle_rounded : Icons.cancel_rounded;
+      final color = isPresent ? Colors.green : Colors.red;
+
+      items.add(
+        _buildActivityItem(
+          context,
+          subjectName,
+          displayStatus,
+          formattedDate,
+          icon,
+          color,
+        ),
+      );
+
+      if (i < limit - 1) {
+        items.add(const SizedBox(height: 12));
+      }
+    }
+
+    return items;
   }
 }

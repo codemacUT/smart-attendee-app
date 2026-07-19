@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smart_attendee/services/auth_service.dart';
-import 'package:smart_attendee/student_app/screens/home_screen.dart';
+import 'package:smart_attendee/student_app/screens/student_dashboard_screen.dart';
 import 'package:smart_attendee/teacher_app/screens/teacher_dashboard_screen.dart';
 import 'package:smart_attendee/shared/widgets/custom_button.dart';
 import 'package:smart_attendee/utils/theme.dart';
@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         final role = result['role']?.toString().toLowerCase();
         if (role == 'student') {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const StudentHomeScreen()),
+            MaterialPageRoute(builder: (_) => const StudentDashboardScreen()),
           );
         } else if (role == 'faculty') {
           Navigator.of(context).pushReplacement(
@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
               _buildDemoTile('Prof. Sharma', 'faculty2@example.com', 'faculty123', Icons.badge_outlined, ctx),
               const Divider(height: 1),
               _buildDemoTile('Aarav Patel', 'student1@example.com', 'student123', Icons.school, ctx),
-              _buildDemoTile('Diya Sharma', 'student2@example.com', 'student123', Icons.school, ctx),
+              _buildDemoTile('Priya Reddy', 'student6@example.com', 'student123', Icons.school, ctx),
             ],
           ),
         );

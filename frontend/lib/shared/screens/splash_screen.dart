@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:smart_attendee/services/auth_service.dart';
 import 'package:smart_attendee/shared/screens/login_screen.dart';
-import 'package:smart_attendee/student_app/screens/home_screen.dart';
+import 'package:smart_attendee/student_app/screens/student_dashboard_screen.dart';
 import 'package:smart_attendee/teacher_app/screens/teacher_dashboard_screen.dart';
 import 'package:smart_attendee/utils/theme.dart';
 
@@ -94,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen>
 
           final roleString = role?.toString().toLowerCase();
           if (roleString == 'student') {
-            _goTo(const StudentHomeScreen());
+            _goTo(const StudentDashboardScreen());
           } else if (roleString == 'faculty') {
             _goTo(const TeacherDashboardScreen());
           } else {

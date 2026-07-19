@@ -33,12 +33,24 @@ const getStudentAnalytics = async (req, res) => {
     
     // We would normally count total QRSessions for this class to know how many they missed
     const allSessions = await prisma.qRSession.findMany({
-      where: { classId: student.classId }
+      where: { classId: student.classId },
+      orderBy: { generatedAt: 'desc' },
+      include: { subject: true }
     });
     
     const totalSessions = allSessions.length;
     const totalAbsent = totalSessions - totalPresent;
     const attendancePct = totalSessions > 0 ? (totalPresent / totalSessions * 100).toFixed(2) : 0;
+
+    const recentSessions = allSessions.slice(0, 20).map(session => {
+      const record = records.find(r => r.qrSessionId === session.id);
+      return {
+        sessionId: session.id,
+        date: session.generatedAt,
+        subjectName: session.subject ? session.subject.name : 'Unknown Subject',
+        status: record ? record.status : 'absent'
+      };
+    });
 
     let subjectsData = [];
     for (const cs of student.class.subjects) {
@@ -67,7 +79,8 @@ const getStudentAnalytics = async (req, res) => {
         totalAbsent,
         attendancePct: parseFloat(attendancePct)
       },
-      subjects: subjectsData
+      subjects: subjectsData,
+      recentSessions
     });
   } catch (error) {
     console.error("Student Analytics Error:", error);
@@ -126,11 +139,37 @@ const getFacultyAnalytics = async (req, res) => {
       });
     }
 
+    const allFacultySessions = await prisma.qRSession.findMany({
+      where: { facultyId: faculty.id },
+      orderBy: { generatedAt: 'desc' },
+      take: 20,
+      include: {
+        subject: true,
+        class: { include: { students: true } },
+        attendanceRecords: true
+      }
+    });
+
+    const recentSessions = allFacultySessions.map(session => {
+      const totalStudents = session.class ? session.class.students.length : 0;
+      const presentCount = session.attendanceRecords.filter(r => r.status === 'present').length;
+      return {
+        sessionId: session.id,
+        date: session.generatedAt,
+        className: session.class ? session.class.name : 'Unknown',
+        subjectName: session.subject ? session.subject.name : 'Unknown',
+        totalStudents,
+        presentCount,
+        absentCount: totalStudents - presentCount
+      };
+    });
+
     res.json({
       facultyId: faculty.id,
       facultyName: faculty.name,
       generatedAt: new Date().toISOString(),
-      classes: classesData
+      classes: classesData,
+      recentSessions
     });
 
   } catch (error) {

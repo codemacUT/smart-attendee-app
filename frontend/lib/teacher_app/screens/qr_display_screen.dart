@@ -168,6 +168,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
       context: context,
       builder: (BuildContext context) {
         return Dialog(
+          insetPadding: EdgeInsets.symmetric(horizontal: Responsive.getPadding(context).left),
           backgroundColor: isDark ? Theme.of(context).cardTheme.color : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(Responsive.getSpacing(context) * 2),
@@ -571,6 +572,8 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                                   child: Column(
           children: [
                                       Container(
+                                        width: double.infinity,
+                                        alignment: Alignment.center,
                                         padding: const EdgeInsets.all(16),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
