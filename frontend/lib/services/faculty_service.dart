@@ -16,7 +16,7 @@ class FacultyService {
 
   /// Gets the faculty's class + subject list from analytics endpoint.
   Future<Map<String, dynamic>> getFacultyAnalytics() async {
-    final response = await _api.get('/api/analytics/faculty');
+    final response = await _api.get('/analytics/faculty');
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {

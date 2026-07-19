@@ -92,9 +92,10 @@ class _SplashScreenState extends State<SplashScreen>
             }
           }
 
-          if (role == 'Student') {
+          final roleString = role?.toString().toLowerCase();
+          if (roleString == 'student') {
             _goTo(const StudentHomeScreen());
-          } else if (role == 'Faculty') {
+          } else if (roleString == 'faculty') {
             _goTo(const TeacherDashboardScreen());
           } else {
             _goToLogin();

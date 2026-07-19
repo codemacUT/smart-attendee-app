@@ -57,12 +57,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       if (!mounted) return;
 
       if (result['success'] == true) {
-        final role = result['role'];
-        if (role == 'Student') {
+        final role = result['role']?.toString().toLowerCase();
+        if (role == 'student') {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const StudentHomeScreen()),
           );
-        } else if (role == 'Faculty') {
+        } else if (role == 'faculty') {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const TeacherDashboardScreen()),
           );

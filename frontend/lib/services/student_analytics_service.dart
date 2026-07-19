@@ -7,7 +7,7 @@ class StudentAnalyticsService {
   /// Fetches overall attendance analytics for the logged-in student.
   Future<Map<String, dynamic>> getStudentAnalytics() async {
     try {
-      final response = await _api.get('/api/analytics/student');
+      final response = await _api.get('/analytics/student');
       if (response.statusCode == 200) {
         return {'success': true, 'data': jsonDecode(response.body)};
       } else {
