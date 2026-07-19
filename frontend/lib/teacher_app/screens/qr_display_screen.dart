@@ -273,9 +273,9 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
     final absentCount = totalCount > 0 ? totalCount - presentCount : 0;
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
       child: Column(
@@ -305,7 +305,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryBlack,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -319,6 +319,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
             children: [
               Expanded(
                 child: _summaryStatTile(
+                  context: context,
                   icon: Icons.check_circle_rounded,
                   color: Colors.green,
                   label: 'Present',
@@ -328,6 +329,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: _summaryStatTile(
+                  context: context,
                   icon: Icons.cancel_rounded,
                   color: Colors.red,
                   label: 'Absent',
@@ -337,8 +339,9 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: _summaryStatTile(
+                  context: context,
                   icon: Icons.group_rounded,
-                  color: AppTheme.primaryBlack,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.primaryBlack,
                   label: 'Total',
                   value: totalCount > 0 ? '$totalCount' : '—',
                 ),
@@ -353,7 +356,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                   const Text("Present Students", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   ...presentStudents.map((s) => ListTile(
-                    leading: const Icon(Icons.person, color: Colors.green),
+                    leading: const Icon(Icons.group_rounded, color: Colors.green),
                     title: Text(s['name'] ?? 'Unknown'),
                     subtitle: Text(s['enrollmentNo'] ?? ''),
                   )).toList(),
@@ -363,7 +366,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                   const Text("Absent Students", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   ...absentStudents.map((s) => ListTile(
-                    leading: const Icon(Icons.person_outline, color: Colors.red),
+                    leading: const Icon(Icons.group_rounded, color: Colors.red),
                     title: Text(s['name'] ?? 'Unknown'),
                     subtitle: Text(s['enrollmentNo'] ?? ''),
                   )).toList(),
@@ -387,6 +390,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
   }
 
   Widget _summaryStatTile({
+    required BuildContext context,
     required IconData icon,
     required Color color,
     required String label,
@@ -408,7 +412,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryBlack,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           Text(

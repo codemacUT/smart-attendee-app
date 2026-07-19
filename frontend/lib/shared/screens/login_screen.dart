@@ -93,69 +93,61 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     }
   }
 
-  void _showForgotPasswordSheet() {
+  void _showDemoAccessSheet() {
     FocusManager.instance.primaryFocus?.unfocus();
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => Container(
-        height: MediaQuery.of(ctx).size.height * 0.45,
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).padding.bottom + 24,
-          top: 24,
-          left: 24,
-          right: 24,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.lightGray,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.mediumGray),
+      builder: (ctx) {
+        return Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).padding.bottom + 24,
+            top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Demo Accounts',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              child: const Icon(
-                Icons.lock_reset_rounded,
-                size: 32,
-                color: AppTheme.primaryBlack,
+              const SizedBox(height: 8),
+              Text(
+                'Select an account to auto-fill credentials',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.darkGray,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Reset Password',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Password resets are managed by your institution.\n\nPlease contact your administrator to regain access.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppTheme.darkGray,
-                height: 1.4,
-                fontSize: Responsive.getFontSize(context, 13),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: CustomButton(
-                text: 'Got it',
-                type: ButtonType.primary,
-                onPressed: () {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                  Navigator.of(ctx).pop();
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 16),
+              _buildDemoTile('Dr. Mehta', 'faculty1@example.com', 'faculty123', Icons.badge_outlined, ctx),
+              _buildDemoTile('Prof. Sharma', 'faculty2@example.com', 'faculty123', Icons.badge_outlined, ctx),
+              const Divider(height: 1),
+              _buildDemoTile('Aarav Patel', 'student1@example.com', 'student123', Icons.school, ctx),
+              _buildDemoTile('Diya Sharma', 'student2@example.com', 'student123', Icons.school, ctx),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDemoTile(String label, String email, String password, IconData icon, BuildContext ctx) {
+    return ListTile(
+      leading: Icon(icon, color: Theme.of(context).textTheme.bodyMedium?.color),
+      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(email, style: const TextStyle(fontSize: 12)),
+      onTap: () {
+        Navigator.of(ctx).pop();
+        setState(() {
+          _emailController.text = email;
+          _passwordController.text = password;
+        });
+        _showTopToast('$label demo credentials applied', icon);
+      },
     );
   }
 
@@ -264,29 +256,11 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                PopupMenuButton<String>(
-                                  onSelected: (value) {
-                                    FocusManager.instance.primaryFocus?.unfocus();
-                                    final isFaculty = value == 'faculty';
-                                    
-                                    setState(() {
-                                      _emailController.text = isFaculty ? 'faculty1@example.com' : 'student1@example.com';
-                                      _passwordController.text = isFaculty ? 'faculty123' : 'student123';
-                                    });
-                                    
-                                    _showTopToast(
-                                      '${isFaculty ? 'Faculty' : 'Student'} demo credentials applied',
-                                      isFaculty ? Icons.badge_outlined : Icons.school,
-                                    );
-                                  },
-                                  offset: const Offset(0, 40),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  color: Theme.of(context).colorScheme.surface,
-                                  elevation: 8,
-                                  tooltip: 'Demo Credentials',
+                                GestureDetector(
+                                  onTap: _showDemoAccessSheet,
+                                  behavior: HitTestBehavior.opaque,
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
-                                    color: Colors.transparent,
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -307,35 +281,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                       ],
                                     ),
                                   ),
-                                  itemBuilder: (context) {
-                                    final color = Theme.of(context).textTheme.bodyMedium?.color;
-                                    return [
-                                      PopupMenuItem(
-                                        value: 'faculty',
-                                        height: 36,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                                        child: Row(
-                                          children: [
-                                            Icon(Icons.badge_outlined, size: 16, color: color),
-                                            const SizedBox(width: 8),
-                                            Text('Faculty Demo', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: color)),
-                                          ],
-                                        ),
-                                      ),
-                                      PopupMenuItem(
-                                        value: 'student',
-                                        height: 36,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                                        child: Row(
-                                          children: [
-                                            Icon(Icons.school, size: 16, color: color),
-                                            const SizedBox(width: 8),
-                                            Text('Student Demo', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: color)),
-                                          ],
-                                        ),
-                                      ),
-                                    ];
-                                  },
                                 ),
                               ],
                             ),
@@ -494,22 +439,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                               ),
                               SizedBox(height: Responsive.getSpacing(context) * 2.5),
                               
-                              // Forgot Password
-                              Center(
-                                child: TextButton(
-                                  onPressed: _showForgotPasswordSheet,
-                                  child: Text(
-                                    'Forgot Password?',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: Theme.of(context).brightness == Brightness.dark 
-                                          ? Colors.white.withValues(alpha: 0.7) 
-                                          : AppTheme.primaryBlack.withValues(alpha: 0.7),
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: Responsive.getFontSize(context, 14),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              const SizedBox.shrink(),
 
                             ],
                           ),
