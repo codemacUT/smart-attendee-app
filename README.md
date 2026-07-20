@@ -36,32 +36,32 @@ This project was developed under the Smart India Hackathon 2025 problem statemen
 
 ---
 
-## 📲 App Preview (Screenshots)
+## 📲 App Preview (Premium Dark Mode)
 
-
-### 🔐 Login  
+### 🔐 Authentication & Demo Access
 <p align="center">
-  <img src="screenshots/login.png" width="350"/>
+  <img src="screenshots/login_screen_dark.png" width="300"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="screenshots/demo_acess_dropdown_dark.png" width="300"/>
 </p>
 
-### 👩‍🏫 Teacher – Select Class & Subject  
+### 👨‍🎓 Student Dashboard & QR Scanner
 <p align="center">
-<img src="screenshots/teacher_class_select.png" width="350"/>
+  <img src="screenshots/student_dashboard_dark.png" width="300"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="screenshots/scan_qr_new.png" width="300"/>
 </p>
 
-### 👩‍🏫 Teacher – Generate Lecture QR  
+### 👩‍🏫 Teacher Dashboard & QR Generation
 <p align="center">
-<img src="screenshots/qr_generate.png" width="350"/>
+  <img src="screenshots/teacher_class_select_dark.png" width="300"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="screenshots/qr_generate_dark.png" width="300"/>
 </p>
 
-### 👨‍🎓 Student Dashboard  
+### 📊 Session Complete Summary
 <p align="center">
-<img src="screenshots/student_dashboard.png" width="350"/>
-</p>
-
-### 👨‍🎓 Student – QR Scanner  
-<p align="center">
-<img src="screenshots/scan_qr.png" width="350"/>
+  <img src="screenshots/session_complete_dark.png" width="300"/>
 </p>
 
 ---
@@ -75,9 +75,27 @@ A full video tutorial showing:
 - Attendance verification  
 - Analytics overview
 
-```
-/videos/demo.mp4
-```
+https://github.com/user-attachments/assets/efde8aaf-6553-415e-8bbc-b277e349a285
+
+---
+
+## 🎨 UI/UX Evolution (Before & After)
+
+We recently underwent a massive UI overhaul to transition from a basic functional layout to a premium, production-ready aesthetic. 
+*Note: The new UI is fully responsive and supports both Light and Dark themes.*
+
+| Screen | Old UI (V1) | Premium UI (V2 - Light) |
+|--------|-------------|-------------------------|
+| **Login** | <img src="screenshots/login_screen.png" width="250"/> | <img src="screenshots/login_screen_light.png" width="250"/> |
+| **Student Dashboard** | <img src="screenshots/student_dashboard.png" width="250"/> | <img src="screenshots/student_dashboard_light.png" width="250"/> |
+| **Teacher Dashboard** | <img src="screenshots/teacher_class_select.png" width="250"/> | <img src="screenshots/teacher_class_select_light.png" width="250"/> |
+| **QR Generation** | <img src="screenshots/qr_generate.png" width="250"/> | <img src="screenshots/qr_generate_light.png" width="250"/> |
+
+**Key UX Upgrades:**
+- **Animations:** Replaced static loading indicators with premium `Shimmer` effects and staggered slide cascades.
+- **Visual Hierarchy:** Removed cluttered tabs in favor of spacious, card-based layouts.
+- **Aesthetics:** Upgraded to modern gradients, glassmorphism shadows, and a cohesive dark/light typography system.
+- **New Features:** Added elegant dropdowns for Demo Access and a comprehensive Session Complete summary.
 
 ---
 
@@ -202,11 +220,24 @@ lib/utils/constants.dart
 ---
 
 ## 🔌 API Documentation  
-Backend routes and expected payloads are documented here:
 
-```
-/backend-info/api_endpoints.md
-```
+Here is a quick overview of the available REST API endpoints. For full request/response JSON payloads, please refer to the detailed [Backend API Documentation](backend/api_endpoints.md).
+
+### 🔐 Authentication
+- `POST /auth/login` — Authenticate student/faculty & get JWT.
+- `GET /auth/profile` — Fetch authenticated user profile.
+
+### 🧑‍🏫 Faculty Attendance Controls
+- `POST /attendance/generate-qr` — Create a new attendance session & generate QR.
+- `POST /attendance/end-session` — End current attendance session.
+- `GET /attendance/session/:id/stats` — Get present/absent breakdown for a session.
+
+### 👨‍🎓 Student Attendance
+- `POST /attendance/mark-attendance` — Mark attendance after QR scan & geolocation validation.
+
+### 📊 Analytics
+- `GET /analytics/faculty` — Get class-wise & subject-wise analytics for faculty.
+- `GET /analytics/student` — Get personal attendance stats for a student.
 
 ---
 
