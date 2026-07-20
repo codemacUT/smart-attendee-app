@@ -5,7 +5,7 @@ import 'package:smart_attendee/services/faculty_service.dart';
 import 'package:smart_attendee/shared/screens/login_screen.dart';
 import 'package:smart_attendee/shared/widgets/custom_button.dart';
 import 'package:smart_attendee/shared/widgets/custom_card.dart';
-import 'package:smart_attendee/shared/widgets/loading_indicator.dart';
+
 import 'package:smart_attendee/shared/widgets/shimmer_loading.dart';
 import 'package:smart_attendee/shared/widgets/logout_dialog.dart';
 import 'package:smart_attendee/shared/widgets/session_summary_modal.dart';
@@ -27,9 +27,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
   final AttendanceService _attendanceService = AttendanceService();
 
   late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
   String? _facultyName;
   List<dynamic> _classes = [];
   List<dynamic> _subjects = [];
@@ -48,13 +45,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
 
     _fetchDashboardData();
   }

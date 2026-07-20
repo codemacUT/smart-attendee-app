@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:smart_attendee/utils/theme.dart';
+
 
 class ShimmerLoader extends StatelessWidget {
   final double width;

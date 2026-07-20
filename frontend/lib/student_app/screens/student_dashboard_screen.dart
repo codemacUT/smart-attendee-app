@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_attendee/student_app/screens/qr_scanner_screen.dart';
 import 'package:smart_attendee/shared/widgets/custom_card.dart';
 import 'package:smart_attendee/shared/widgets/custom_button.dart';
-import 'package:smart_attendee/shared/widgets/loading_indicator.dart';
+
 import 'package:smart_attendee/shared/widgets/shimmer_loading.dart';
 import 'package:smart_attendee/services/student_analytics_service.dart';
 import 'package:smart_attendee/services/auth_service.dart';
@@ -19,9 +19,6 @@ class StudentDashboardScreen extends StatefulWidget {
 
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> with TickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  
   final StudentAnalyticsService _analyticsService = StudentAnalyticsService();
   final AuthService _authService = AuthService();
   
@@ -30,7 +27,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
   Map<String, dynamic>? _studentProfile;
   bool _isLoading = true;
   String? _errorMessage;
-  bool _showAllSubjects = false;
   @override
   void initState() {
     super.initState();
@@ -38,13 +34,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
     
     _fetchStudentData();
   }
@@ -516,28 +505,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
     return 'Class';
   }
 
-  int _getTotalPresent() {
-    if (_studentData != null) {
-      // Accessing nested `overall.totalPresent`
-      final overall = _studentData!['overall'];
-      if (overall != null) {
-        return overall['totalPresent'] ?? 0;
-      }
-    }
-    return 0;
-  }
-
-  int _getTotalAbsent() {
-    if (_studentData != null) {
-      final overall = _studentData!['overall'];
-      if (overall != null) {
-        return overall['totalAbsent'] ?? 0;
-      }
-    }
-    return 0;
-  }
-
-
   double _getAttendancePercentage() {
     if (_studentData != null) {
       final overall = _studentData!['overall'];
@@ -546,24 +513,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Ti
       }
     }
     return 0.0;
-  }
-
-
-  int _getTotalSessions() {
-    if (_studentData != null) {
-      final overall = _studentData!['overall'];
-      if (overall != null) {
-        return (overall['totalSessions'] ?? 0) as int;
-      }
-    }
-    return 0;
-  }
-
-  int _getSubjectsCount() {
-    if (_studentData != null && _studentData!['subjects'] != null) {
-      return (_studentData!['subjects'] as List).length;
-    }
-    return 0;
   }
 
   bool _hasRiskWarning() {

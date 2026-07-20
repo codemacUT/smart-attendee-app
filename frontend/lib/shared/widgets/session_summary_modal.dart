@@ -134,14 +134,14 @@ class SessionSummaryModal extends StatelessWidget {
                   if (presentStudents.isNotEmpty) ...[
                     _buildStudentSectionLabel(context, 'Present', Colors.green),
                     const SizedBox(height: 12),
-                    ...presentStudents.map((s) => _buildPremiumStudentTile(context, s, true)).toList(),
+                    ...presentStudents.map((s) => _buildPremiumStudentTile(context, s, true)),
                     const SizedBox(height: 24),
                   ],
 
                   if (absentStudents.isNotEmpty) ...[
                     _buildStudentSectionLabel(context, 'Absent', Colors.red),
                     const SizedBox(height: 12),
-                    ...absentStudents.map((s) => _buildPremiumStudentTile(context, s, false)).toList(),
+                    ...absentStudents.map((s) => _buildPremiumStudentTile(context, s, false)),
                   ],
                 ],
               ),

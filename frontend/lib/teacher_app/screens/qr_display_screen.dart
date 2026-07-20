@@ -4,7 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:smart_attendee/services/attendance_service.dart';
 import 'package:smart_attendee/shared/widgets/custom_card.dart';
 import 'package:smart_attendee/shared/widgets/custom_button.dart';
-import 'package:smart_attendee/shared/widgets/custom_button.dart';
+
 import 'package:smart_attendee/shared/widgets/loading_indicator.dart';
 import 'package:smart_attendee/shared/widgets/session_summary_modal.dart';
 import 'package:smart_attendee/utils/theme.dart';
@@ -115,6 +115,34 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
     } catch (e) {
       setState(() {
         _errorMessage = 'Error generating QR code. Please try again.';
+      });
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _refreshQr() async {
+    if (_sessionId == null) {
+      return _generateQr();
+    }
+    setState(() { _isLoading = true; _errorMessage = null; });
+    try {
+      final result = await _attendanceService.refreshQrSession(
+        sessionId: _sessionId!,
+      );
+
+      if (result['success']) {
+        _startTimers();
+        _animationController.reset();
+        _animationController.forward();
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to refresh QR code: ${result['message']}';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error refreshing QR code. Please try again.';
       });
     } finally {
       setState(() => _isLoading = false);
@@ -387,7 +415,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                                         child: CustomButton(
                                           text: 'Try Again',
                                           icon: Icons.refresh_rounded,
-                                          onPressed: _generateQr,
+                                          onPressed: _refreshQr,
                                           type: ButtonType.gradient,
                                         ),
                                       ),
@@ -493,7 +521,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                                       child: CustomButton(
                                         text: 'Refresh QR',
                                         icon: Icons.refresh_rounded,
-                                        onPressed: _generateQr,
+                                        onPressed: _refreshQr,
                                         type: ButtonType.gradient,
                                       ),
                                     ),

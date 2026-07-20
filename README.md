@@ -21,18 +21,13 @@ These demo accounts are safe and only expose sample data.
 
 ---
 
-## 🚀 Problem → Solution (SIH Context)
+## 🎯 The Problem (SIH 2025 Case Study)
 
-Traditional college attendance is:
-- time-consuming,  
-- error-prone,  
-- easy to manipulate (proxy attendance),  
-- manually maintained.
+This project originated from **Smart India Hackathon 2025 (Problem Statement ID: 25016 - Government of Punjab)**.
 
-Smart Attendee solves this by connecting **QR-based authentication** with **GPS location validation** and **real-time session monitoring**.
+**The Challenge:** Traditional college attendance is manual, time-consuming, and highly susceptible to proxy attendance. Furthermore, faculty lack real-time analytics to identify disengaged or struggling students.
 
-This project was developed under the Smart India Hackathon 2025 problem statement:  
-**“Automated attendance monitoring system for educational institutions.”**
+**The Solution:** Smart Attendee completely automates this process. By enforcing geofenced, time-sensitive QR code scanning, it eliminates proxy attendance, saves valuable teaching time, and provides real-time, actionable insights through a comprehensive analytics dashboard.
 
 ---
 
@@ -241,26 +236,19 @@ Here is a quick overview of the available REST API endpoints. For full request/r
 
 ---
 
-## 👨‍💻 My Contribution
+## 👨‍💻 My Contribution & Project Ownership
 
-I developed the **entire Flutter application**, including:
+What started as a frontend-focused hackathon contribution evolved into a complete full-stack undertaking. My contributions include:
 
-- full UI/UX for both roles  
-- QR scanner workflow  
-- GPS/geofence attendance validation  
-- JWT login & authentication flow  
-- all REST API integrations  
-- dashboards & analytics  
-- session flows (generate, scan, complete)  
-- responsive design + animations  
+**Frontend (Flutter):**
+- Architected and developed the complete mobile application for both Student and Faculty roles.
+- Implemented complex device-native features including QR scanning workflows and GPS/Geofencing validation.
+- Built a premium, fully responsive UI/UX featuring staggered animations, Shimmer loaders, and dynamic Dark/Light modes.
 
-Backend development (Express.js + PostgreSQL) was done by teammates; I integrated all endpoints and built the complete mobile client.
-
----
-
-## 🏅 Smart India Hackathon (SIH) — Project Context
-
-This application was built as part of **SIH 2025**, addressing attendance automation in higher education using modern technologies like geofencing, QR identity, and analytics dashboards.
+**Backend (Express.js & PostgreSQL):**
+- While the initial backend skeleton was a team effort, I took ownership to completely re-architect and expand the REST API.
+- Engineered robust session management (e.g., dynamic QR session refreshing without data duplication).
+- Deployed and currently maintain the live database and Express server on Render.
 
 ---
 

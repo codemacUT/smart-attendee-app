@@ -16,6 +16,7 @@ app.get('/auth/profile', authenticateToken, authController.getProfile);
 
 // Attendance Routes
 app.post('/attendance/generate-qr', authenticateToken, permit('faculty'), attendanceController.generateQR);
+app.post('/attendance/refresh-qr', authenticateToken, permit('faculty'), attendanceController.refreshQR);
 app.post('/attendance/mark-attendance', authenticateToken, permit('student'), attendanceController.markAttendance);
 app.post('/attendance/end-session', authenticateToken, permit('faculty'), attendanceController.endSession);
 app.get('/attendance/session/:id', authenticateToken, permit('faculty'), attendanceController.getSessionDetails);

@@ -34,6 +34,29 @@ class AttendanceService {
     }
   }
 
+  Future<Map<String, dynamic>> refreshQrSession({
+    required int sessionId,
+  }) async {
+    try {
+      final response = await _api.post(
+        '/attendance/refresh-qr',
+        body: {
+          'qrSessionId': sessionId,
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {'success': true, 'data': jsonDecode(response.body)};
+      } else {
+        return {
+          'success': false,
+          'message': 'API Error (${response.statusCode}): ${response.body}'
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   Future<Map<String, dynamic>> getSessionDetails(int sessionId) async {
     try {
       final response = await _api.get('/attendance/session/$sessionId');

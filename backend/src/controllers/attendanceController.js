@@ -83,6 +83,49 @@ const generateQR = async (req, res) => {
   }
 };
 
+const refreshQR = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { qrSessionId } = req.body;
+
+    if (!qrSessionId) {
+      return res.status(400).json({ message: "qrSessionId is required" });
+    }
+
+    const faculty = await prisma.faculty.findUnique({ where: { userId } });
+    if (!faculty) {
+      return res.status(403).json({ message: "Faculty profile not found" });
+    }
+
+    const session = await prisma.qRSession.findUnique({
+      where: { id: parseInt(qrSessionId) }
+    });
+
+    if (!session) {
+      return res.status(404).json({ message: "QR Session not found" });
+    }
+
+    if (session.facultyId !== faculty.id) {
+      return res.status(403).json({ message: "You don't have permission to refresh this session" });
+    }
+
+    const updatedSession = await prisma.qRSession.update({
+      where: { id: session.id },
+      data: { generatedAt: new Date() }
+    });
+
+    res.json({
+      message: "QR session refreshed successfully",
+      qrSessionId: updatedSession.id,
+      generatedAt: updatedSession.generatedAt
+    });
+
+  } catch (error) {
+    console.error("Error refreshing QR:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const markAttendance = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -257,6 +300,7 @@ const getSessionStats = async (req, res) => {
 
 module.exports = {
   generateQR,
+  refreshQR,
   markAttendance,
   endSession,
   getSessionDetails,
